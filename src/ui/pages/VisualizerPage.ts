@@ -4,11 +4,15 @@ import { AppState } from '../../state/AppState';
 import { AudioBridge } from '../../core/AudioBridge';
 import { BackButton } from '../components/BackButton';
 import { MinimalControls } from '../components/MinimalControls';
+import { MusicLibrarySidebar } from '../components/MusicLibrarySidebar';
+import { LibraryAPIService } from '../../services/LibraryAPIService';
+import { LibraryAudioService } from '../../services/LibraryAudioService';
 
 export class VisualizerPage {
   private element: HTMLElement;
   private backButton: BackButton;
   private minimalControls: MinimalControls;
+  private musicLibrary: MusicLibrarySidebar;
   private unsubscribe: (() => void) | null = null;
 
   constructor(
@@ -23,9 +27,20 @@ export class VisualizerPage {
 
     this.backButton = new BackButton(onNavigateBack);
     this.minimalControls = new MinimalControls(store, actions);
+
+    // Initialize music library services
+    const libraryAPIService = new LibraryAPIService();
+    const libraryAudioService = new LibraryAudioService(libraryAPIService, audioBridge);
+
+    // Create music library sidebar
+    this.musicLibrary = new MusicLibrarySidebar(
+      store,
+      actions,
+      libraryAudioService
+    );
   }
 
-  render(): HTMLElement {
+  async render(): Promise<HTMLElement> {
     this.element.innerHTML = '';
 
     // Add back button
@@ -45,6 +60,10 @@ export class VisualizerPage {
 
     // Add minimal playback controls
     this.element.appendChild(this.minimalControls.render());
+
+    // Add music library sidebar
+    const librarySidebar = await this.musicLibrary.render();
+    this.element.appendChild(librarySidebar);
 
     // Setup event listeners for file controls
     const fileInput = controlsPanel.querySelector('#viz-file-input') as HTMLInputElement;
@@ -116,5 +135,6 @@ export class VisualizerPage {
   destroy(): void {
     this.unsubscribe?.();
     this.minimalControls.destroy();
+    this.musicLibrary.destroy();
   }
 }

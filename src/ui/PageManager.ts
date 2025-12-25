@@ -90,9 +90,9 @@ export class PageManager {
     }
   }
 
-  render(): HTMLElement {
+  async render(): Promise<HTMLElement> {
     this.container.appendChild(this.landingPage.render());
-    this.container.appendChild(this.visualizerPage.render());
+    this.container.appendChild(await this.visualizerPage.render());
 
     const hash = window.location.hash || '#/';
     if (hash === '#/visualizer') {

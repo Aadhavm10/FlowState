@@ -81,7 +81,7 @@ export class App {
       await this.audioBridge.initialize();
 
       logger.info('Rendering UI...');
-      const appRoot = this.pageManager.render();
+      const appRoot = await this.pageManager.render();
       const footerRoot = this.nowPlayingFooter.render();
 
       document.body.appendChild(appRoot);

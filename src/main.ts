@@ -6,6 +6,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import vertexShader from './shaders/vertex.vs.glsl';
 import fragmentShader from './shaders/fragment.fs.glsl';
 import './style.css';
+import './ui/styles/library.css';
 
 // NEW: Import YouTube Music System
 import { App as YouTubeApp } from './app';
@@ -15,7 +16,9 @@ const App = () => {
   let audioContext: AudioContext,
     analyser: AnalyserNode,
     source: MediaElementAudioSourceNode;
-  let dataArray = new Uint8Array();
+  const meshSegments = 128;
+  const fftSize = meshSegments * 4;
+  let dataArray = new Uint8Array(fftSize / 2); // Initialize with proper size
   const audio = new Audio();
   const container = document.getElementById('app');
   container?.appendChild(audio);
@@ -59,7 +62,6 @@ const App = () => {
   // controls.autoRotateSpeed = .5;
 
   // variables
-  const meshSegments = 128;
   const uniforms = {
     u_resolution: {
       value: new THREE.Vector2(window.innerWidth, window.innerHeight),
@@ -73,6 +75,12 @@ const App = () => {
     u_data_arr: { type: `float[${meshSegments}]`, value: dataArray },
     u_amplitude: { value: 2.0 },
   };
+
+  // Mouse interaction variables
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  let mouseWorldPos = new THREE.Vector3();
+  let planeMesh: THREE.Points;
 
   function setupEvents() {
     const canvasContainer = document.getElementById(
@@ -117,6 +125,16 @@ const App = () => {
     canvasContainer.addEventListener('mousemove', (event) => {
       uniforms.u_mouse.value.x = event.clientX;
       uniforms.u_mouse.value.y = event.clientY;
+
+      // Update raycaster for 3D mouse position
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+
+      // Raycast to a plane at y=0 to get world position
+      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -8);
+      raycaster.ray.intersectPlane(plane, mouseWorldPos);
     });
 
     const loadDefaultButton = document.getElementById('load-default');
@@ -178,7 +196,7 @@ const App = () => {
       blending: THREE.AdditiveBlending,
     });
 
-    const planeMesh = new THREE.Points(geometry, material);
+    planeMesh = new THREE.Points(geometry, material);
     // const planeMesh = new THREE.Mesh(geometry, material);
     planeMesh.rotation.x = Math.PI / 2;
     planeMesh.position.y = 8;
@@ -227,21 +245,52 @@ const App = () => {
   }
 
   function render() {
-    if (analyser) {
-      analyser.getByteFrequencyData(dataArray);
-    }
+    // Check if audio is playing
+    const isPlaying = !audio.paused && audio.currentTime > 0;
 
-    // Update uniforms
-    uniforms.u_time.value = clock.getElapsedTime();
-    uniforms.u_data_arr.value = dataArray;
+    if (isPlaying) {
+      // PLAYING: Use audio data (current behavior)
+      if (analyser) {
+        analyser.getByteFrequencyData(dataArray);
+      }
 
-    if (!audio.paused) {
+      // Animate camera when playing
       cameraPole.rotateY(0.001);
       cameraPole.rotateZ(0.001);
       cameraPole.position.x = -50 * Math.sin(audio.currentTime / 10);
       cameraPole.position.z = 25 * Math.sin(audio.currentTime / 15);
       cameraPole.position.y = 5 * (Math.sin(audio.currentTime / 10) + 1);
+    } else {
+      // NOT PLAYING: Use mouse interaction
+      // Create wave effect based on distance from mouse position
+      const halfSegments = meshSegments / 2;
+
+      for (let i = 0; i < dataArray.length; i++) {
+        // Map index to position in the mesh grid
+        // The shader uses positions from -halfSegments to +halfSegments
+        const gridSize = 64; // Match shader's data array size
+        const x = (i % gridSize) - (gridSize / 2);
+        const y = Math.floor(i / gridSize) - (gridSize / 2);
+
+        // Calculate distance from mouse world position
+        // Account for mesh scaling (scale.x *= 2, scale.y *= 2)
+        const dx = (x * 1.5) - mouseWorldPos.x;
+        const dy = (y * 1.5) - mouseWorldPos.z;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Create a falloff effect - closer to mouse = higher value
+        const maxDistance = 30;
+        const falloff = Math.max(0, 1 - (distance / maxDistance));
+
+        // Set data value based on proximity (0-255 range like audio data)
+        // Use exponential falloff for sharper effect
+        dataArray[i] = Math.floor(Math.pow(falloff, 1.5) * 255);
+      }
     }
+
+    // Update uniforms
+    uniforms.u_time.value = clock.getElapsedTime();
+    uniforms.u_data_arr.value = dataArray;
 
     controls.update();
     // renderer.render(scene, camera);
