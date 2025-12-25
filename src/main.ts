@@ -7,6 +7,9 @@ import vertexShader from './shaders/vertex.vs.glsl';
 import fragmentShader from './shaders/fragment.fs.glsl';
 import './style.css';
 
+// NEW: Import YouTube Music System
+import { App as YouTubeApp } from './app';
+
 const App = () => {
   // Audio
   let audioContext: AudioContext,
@@ -16,6 +19,9 @@ const App = () => {
   const audio = new Audio();
   const container = document.getElementById('app');
   container?.appendChild(audio);
+
+  // NEW: YouTube Music System instance
+  let youtubeApp: YouTubeApp;
 
   // Scene
   const scene = new THREE.Scene();
@@ -70,7 +76,7 @@ const App = () => {
 
   function setupEvents() {
     const canvasContainer = document.getElementById(
-      'app_view',
+      'webgl',
     ) as HTMLCanvasElement;
 
     // Handle file upload
@@ -79,8 +85,17 @@ const App = () => {
       const el = event.target as HTMLInputElement;
       if (el && el.files) {
         const file = el.files[0];
-        audio.src = URL.createObjectURL(file);
-        audio.load();
+
+        // NEW: Use AudioBridge if YouTube system is initialized
+        if (youtubeApp) {
+          const bridge = youtubeApp.getAudioBridge();
+          bridge.switchToFile(file);
+          youtubeApp.getActions().setAudioSource('file');
+        } else {
+          // Fallback to original behavior
+          audio.src = URL.createObjectURL(file);
+          audio.load();
+        }
       }
     });
 
@@ -107,6 +122,32 @@ const App = () => {
     const loadDefaultButton = document.getElementById('load-default');
     loadDefaultButton?.addEventListener('click', () => {
       loadDefaultSong();
+    });
+
+    // NEW: Hook up UI file upload to AudioBridge
+    const vizFileInput = document.getElementById('viz-file-input');
+    vizFileInput?.addEventListener('change', async function (event) {
+      const el = event.target as HTMLInputElement;
+      if (el && el.files && youtubeApp) {
+        const file = el.files[0];
+        const bridge = youtubeApp.getAudioBridge();
+        bridge.switchToFile(file);
+        youtubeApp.getActions().setAudioSource('file');
+        youtubeApp.getActions().setPlaying(true);
+      }
+    });
+
+    // NEW: Hook up UI load sample to AudioBridge
+    const vizLoadSample = document.getElementById('viz-load-sample');
+    vizLoadSample?.addEventListener('click', () => {
+      if (youtubeApp) {
+        const bridge = youtubeApp.getAudioBridge();
+        bridge.switchToFileUrl('./song.mp3');
+        youtubeApp.getActions().setAudioSource('file');
+        youtubeApp.getActions().setPlaying(true);
+      } else {
+        loadDefaultSong();
+      }
     });
 
     // Update canvas if window is resized
@@ -149,6 +190,8 @@ const App = () => {
   }
 
   function setupAudioContext() {
+    if (audioContext) return; // Already initialized
+
     audioContext = new window.AudioContext();
     source = audioContext.createMediaElementSource(audio);
 
@@ -165,6 +208,22 @@ const App = () => {
     // array holding 8-bit integers representing frequencies
     // analyser.frequencyBinCount is equal to fftSize / 2
     dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    // NEW: Initialize YouTube Music System
+    initializeYouTubeSystem();
+  }
+
+  // NEW: Initialize YouTube Music System
+  async function initializeYouTubeSystem() {
+    try {
+      console.log('Initializing YouTube Music System...');
+      youtubeApp = new YouTubeApp(audioContext, analyser, audio);
+      await youtubeApp.initialize();
+      console.log('YouTube Music System ready!');
+    } catch (error) {
+      console.error('Failed to initialize YouTube Music System:', error);
+      // Continue without YouTube features
+    }
   }
 
   function render() {
@@ -191,8 +250,14 @@ const App = () => {
   }
 
   function loadDefaultSong() {
-    audio.src = './song.mp3';
-    audio.load();
+    if (youtubeApp) {
+      const bridge = youtubeApp.getAudioBridge();
+      bridge.switchToFileUrl('./song.mp3');
+      youtubeApp.getActions().setAudioSource('file');
+    } else {
+      audio.src = './song.mp3';
+      audio.load();
+    }
   }
 
   function postProcessing() {
@@ -212,6 +277,9 @@ const App = () => {
   setupEvents();
   postProcessing();
   init();
+
+  // NEW: Initialize audio context immediately to load YouTube UI
+  setupAudioContext();
 };
 
 App();

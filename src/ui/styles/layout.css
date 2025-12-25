@@ -1,0 +1,72 @@
+/* Layout - Page structure */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: #0a0a0a;
+  color: white;
+  overflow-x: hidden;
+}
+
+/* WebGL Canvas - Always present, z-index controlled by page */
+#webgl {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.app-container {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  z-index: 10;
+}
+
+/* Landing Page Layout */
+.landing-page {
+  width: 100%;
+  min-height: 100vh;
+  padding-bottom: 100px;
+  position: relative;
+  z-index: 10;
+}
+
+.landing-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Visualizer Page Layout */
+.visualizer-page {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  z-index: 10;
+}
+
+/* Show canvas when visualizer page is active */
+body.page-visualizer #webgl {
+  z-index: 0;
+  opacity: 1;
+}
+
+/* Shared utility classes */
+.hidden {
+  display: none !important;
+}
+
+.visible {
+  display: block !important;
+}

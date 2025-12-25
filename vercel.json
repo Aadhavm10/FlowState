@@ -1,0 +1,11 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" }
+  ],
+  "env": {
+    "YOUTUBE_API_KEY": "@youtube-api-key",
+    "GROQ_API_KEY": "@groq-api-key"
+  }
+}

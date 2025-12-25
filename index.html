@@ -3,16 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>3D Audio Visualizer</title>
+    <title>FlowState - AI Music Visualizer</title>
   </head>
   <body>
-    <div id="app">
-      <div class="controls">
-        <input type="file" id="fileIn" />
-        <button id="load-default">Load Sample Song</button>
-      </div>
-      <canvas id="app_view"></canvas>
-    </div>
+    <!-- Canvas for 3D visualizer (always present) -->
+    <canvas id="webgl"></canvas>
+
+    <!-- YouTube IFrame Player (hidden) -->
+    <div id="youtube-player" style="position: absolute; top: -1000px; left: -1000px; width: 0; height: 0;"></div>
+
+    <!-- Page manager and footer will be appended here by app.ts -->
+
+    <!-- YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <!-- Main application -->
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
