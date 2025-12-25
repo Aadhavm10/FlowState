@@ -227,10 +227,12 @@ export class LandingPage {
         enabledWaves: ['top', 'middle', 'bottom'],
         lineCount: [10, 15, 20],
         lineDistance: [8, 6, 4],
-        bendRadius: 5.0,
-        bendStrength: -0.5,
+        bendRadius: 3.0,
+        bendStrength: -2.5,
+        mouseDamping: 0.08,
         interactive: true,
         parallax: true,
+        parallaxStrength: 0.5,
         animationSpeed: 0.6
       });
     }
