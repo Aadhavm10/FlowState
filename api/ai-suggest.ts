@@ -1,33 +1,86 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import Groq from 'groq-sdk';
 
-const BACKEND_URL = process.env.VITE_BACKEND_URL || 'http://flowstate-music.us-east-1.elasticbeanstalk.com';
+// Retry logic for rate limits
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 5
+): Promise<T> {
+  let lastError: Error | null = null;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      const isRateLimit = error?.status === 429 || error?.message?.includes('rate limit');
+      if (isRateLimit && attempt < maxRetries - 1) {
+        const delay = 500 * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError || new Error('Max retries reached');
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Only allow POST
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const response = await fetch(`${BACKEND_URL}/api/ai/suggest`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(req.body),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json(data);
+    const { prompt, count = 20 } = req.body;
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    return res.status(200).json(data);
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      throw new Error('GROQ_API_KEY not configured');
+    }
+
+    const groq = new Groq({ apiKey });
+
+    const completion = await retryWithBackoff(() =>
+      groq.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: `You are a music expert creating personalized playlists.
+Given a user's request, suggest ${count} specific, real songs that match the mood, genre, or theme.
+Return ONLY a JSON array of objects with "title" and "artist" fields.`
+          },
+          { role: 'user', content: prompt }
+        ],
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.7,
+        max_tokens: 2048
+      })
+    );
+
+    const content = completion.choices[0]?.message?.content || '[]';
+    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      throw new Error('No JSON array in AI response');
+    }
+
+    const suggestions = JSON.parse(jsonMatch[0]).slice(0, count);
+    return res.status(200).json({ suggestions, count: suggestions.length });
+
   } catch (error) {
-    console.error('Proxy error:', error);
+    console.error('[AI Suggest] Error:', error);
     return res.status(500).json({
-      error: 'Proxy request failed',
+      error: 'AI suggestion failed',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
