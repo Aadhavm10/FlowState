@@ -3,12 +3,11 @@ import { logger } from '../utils/logger';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 export class AIService {
-  private apiBaseUrl: string;
+  private backendUrl: string;
 
   constructor() {
-    this.apiBaseUrl = import.meta.env.DEV
-      ? '/api'
-      : window.location.origin + '/api';
+    // Use AWS backend for AI endpoints
+    this.backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
   }
 
   /**
@@ -19,11 +18,10 @@ export class AIService {
       const count = this.determinePlaylistSize(prompt);
       logger.debug('Requesting AI suggestions:', { prompt, count });
 
-      const response = await fetchWithTimeout(`${this.apiBaseUrl}/groq-ai`, {
+      const response = await fetchWithTimeout(`${this.backendUrl}/api/ai/suggest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'suggest',
           prompt,
           count
         })
@@ -51,11 +49,10 @@ export class AIService {
     try {
       logger.debug('Filtering', tracks.length, 'tracks');
 
-      const response = await fetchWithTimeout(`${this.apiBaseUrl}/groq-ai`, {
+      const response = await fetchWithTimeout(`${this.backendUrl}/api/ai/filter`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'filter',
           tracks: tracks.map(t => ({ title: t.title, artist: t.artist }))
         })
       }, 15000); // 15 second timeout for AI

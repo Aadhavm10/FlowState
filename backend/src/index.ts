@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import audioRoutes from './routes/audio.js';
+import aiRoutes from './routes/ai.js';
 import { cleanupOldFiles } from './services/ytdlp.js';
 
 // Load environment variables
@@ -39,6 +40,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api', audioRoutes);
+app.use('/api/ai', aiRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -76,10 +78,12 @@ app.listen(PORT, () => {
 ╚════════════════════════════════════════╝
 
 Endpoints:
-  GET  /api/health         - Health check
-  POST /api/download       - Initiate audio download
-  GET  /api/status/:jobId  - Check download status
-  GET  /api/stream/:jobId  - Stream audio file
+  GET  /api/health           - Health check
+  POST /api/download         - Initiate audio download
+  GET  /api/status/:jobId    - Check download status
+  GET  /api/stream/:jobId    - Stream audio file
+  POST /api/ai/suggest       - Generate AI song suggestions
+  POST /api/ai/filter        - Filter playlists/compilations
   `);
 });
 

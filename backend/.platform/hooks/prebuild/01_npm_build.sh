@@ -1,8 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Running npm install and build..."
+echo "Running npm install (production mode - pre-built code)..."
 cd /var/app/staging
-npm install
-npm run build
-echo "Build completed successfully"
+npm install --omit=dev
+echo "Dependencies installed successfully"
