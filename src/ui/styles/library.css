@@ -2,66 +2,57 @@
    Music Library Sidebar Styles
    ================================ */
 
-/* Sidebar Container */
+/* Sidebar Container - Left Side */
 .library-sidebar {
   position: fixed;
-  top: 0;
-  right: 0;
-  width: 400px;
-  height: 100vh;
+  bottom: 80px; /* Above footer */
+  left: 0;
+  width: 350px;
+  height: calc(100vh - 160px); /* Account for footer */
   background: rgba(10, 10, 10, 0.95);
   backdrop-filter: blur(20px);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
   display: flex;
   flex-direction: column;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
 }
 
 .library-sidebar.collapsed {
-  transform: translateX(360px); /* Show only toggle button */
+  transform: translateX(-310px); /* Show only toggle button */
 }
 
-/* Toggle Button */
+/* Simple Toggle Button - Bottom Left in Footer */
 .library-toggle {
   position: absolute;
-  left: -50px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 50px;
-  height: 120px;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(99, 102, 241, 0.9));
+  right: -40px;
+  bottom: 20px;
+  width: 40px;
+  height: 40px;
+  background: rgba(139, 92, 246, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px 0 0 8px;
+  border-radius: 4px;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  box-shadow: -2px 0 10px rgba(139, 92, 246, 0.3);
+  transition: all 0.2s ease;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
 }
 
 .library-toggle:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 1), rgba(99, 102, 241, 1));
-  transform: translateY(-50%) translateX(-5px);
-  box-shadow: -4px 0 20px rgba(139, 92, 246, 0.5);
+  background: rgba(139, 92, 246, 1);
+  transform: translateX(2px);
+  box-shadow: 4px 0 15px rgba(139, 92, 246, 0.4);
 }
 
 .library-toggle .icon {
-  font-size: 28px;
+  font-size: 20px;
 }
 
 .library-toggle .text {
-  font-size: 10px;
-  font-weight: 600;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  display: none; /* Hide text for simpler look */
 }
 
 /* Sidebar Content */

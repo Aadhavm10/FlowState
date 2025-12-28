@@ -33,10 +33,8 @@ export class NowPlayingFooter {
 
       <div class="footer-progress">
         <span class="footer-current-time">0:00</span>
-        <div class="footer-progress-bar">
-          <div class="footer-progress-fill"></div>
-        </div>
-        <span class="footer-duration">0:00</span>
+        <input type="range" class="footer-progress-slider" min="0" max="100" value="0" step="0.1" />
+        <span class="footer-countdown">-0:00</span>
       </div>
 
       <div class="footer-volume">
@@ -49,7 +47,7 @@ export class NowPlayingFooter {
     const previousBtn = this.element.querySelector('.prev') as HTMLButtonElement;
     const nextBtn = this.element.querySelector('.next') as HTMLButtonElement;
     const volumeSlider = this.element.querySelector('.footer-volume-slider') as HTMLInputElement;
-    const progressBar = this.element.querySelector('.footer-progress-bar') as HTMLElement;
+    const progressSlider = this.element.querySelector('.footer-progress-slider') as HTMLInputElement;
 
     playPauseBtn.addEventListener('click', () => {
       const isPlaying = this.store.getState().playback.isPlaying;
@@ -69,12 +67,11 @@ export class NowPlayingFooter {
       this.actions.setVolume(volume);
     });
 
-    progressBar.addEventListener('click', (e) => {
-      const rect = progressBar.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const percentage = x / rect.width;
+    // Progress slider - seek within song
+    progressSlider.addEventListener('input', (e) => {
+      const percentage = parseInt((e.target as HTMLInputElement).value);
       const duration = this.store.getState().playback.duration;
-      const newPosition = percentage * duration;
+      const newPosition = (percentage / 100) * duration;
       this.actions.setPosition(newPosition);
     });
 
@@ -99,9 +96,9 @@ export class NowPlayingFooter {
     const title = this.element.querySelector('.footer-title') as HTMLElement;
     const artist = this.element.querySelector('.footer-artist') as HTMLElement;
     const playPauseBtn = this.element.querySelector('.play-pause') as HTMLButtonElement;
-    const progressFill = this.element.querySelector('.footer-progress-fill') as HTMLElement;
+    const progressSlider = this.element.querySelector('.footer-progress-slider') as HTMLInputElement;
     const currentTimeEl = this.element.querySelector('.footer-current-time') as HTMLElement;
-    const durationEl = this.element.querySelector('.footer-duration') as HTMLElement;
+    const countdownEl = this.element.querySelector('.footer-countdown') as HTMLElement;
     const volumeSlider = this.element.querySelector('.footer-volume-slider') as HTMLInputElement;
 
     if (track) {
@@ -117,11 +114,16 @@ export class NowPlayingFooter {
 
     playPauseBtn.textContent = isPlaying ? '⏸' : '▶';
 
+    // Update progress slider
     const percentage = duration > 0 ? (position / duration) * 100 : 0;
-    progressFill.style.width = `${percentage}%`;
+    progressSlider.value = percentage.toString();
 
+    // Update time displays
     currentTimeEl.textContent = this.formatTime(position);
-    durationEl.textContent = this.formatTime(duration);
+
+    // Show countdown (time remaining)
+    const remaining = Math.max(0, duration - position);
+    countdownEl.textContent = '-' + this.formatTime(remaining);
 
     volumeSlider.value = (volume * 100).toString();
   }
