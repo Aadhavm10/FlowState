@@ -73,7 +73,7 @@ Return ONLY a JSON array of valid song index numbers. Example: [0, 2, 5]`
           },
           { role: 'user', content: trackList }
         ],
-        model: 'mixtral-8x7b-32768',
+        model: 'llama-3.3-70b-versatile',
         temperature: 0.2,
         max_tokens: 1024
       })
