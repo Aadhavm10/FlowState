@@ -12,9 +12,25 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-// Middleware
+// Middleware - CORS configuration
+// Allow multiple origins: localhost for dev + Vercel for production
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'https://flowstate-liart.vercel.app', // Add your actual Vercel URL
+  FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || FRONTEND_URL === '*') {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for now - restrict later
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
