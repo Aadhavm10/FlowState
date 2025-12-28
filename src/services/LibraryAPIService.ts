@@ -8,11 +8,15 @@ export class LibraryAPIService {
   private readonly apiUrl: string;
 
   constructor() {
-    // Use environment variable for backend URL
-    // In development: http://localhost:3001
-    // In production: http://flowstate-music.us-east-1.elasticbeanstalk.com
-    this.apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
-    console.log(`[LibraryAPIService] Initialized with backend URL: ${this.apiUrl}`);
+    // In production: Use Vercel API proxy (avoids mixed content HTTPS→HTTP)
+    // In development: Direct connection to local backend
+    if (import.meta.env.DEV) {
+      this.apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    } else {
+      // Production: Use Vercel API proxy at /api/library-proxy
+      this.apiUrl = '';  // Empty = use relative URLs
+    }
+    console.log(`[LibraryAPIService] Mode: ${import.meta.env.DEV ? 'DEV' : 'PROD'}, API URL: ${this.apiUrl || 'Vercel Proxy'}`);
   }
 
   /**
@@ -24,7 +28,8 @@ export class LibraryAPIService {
     console.log(`[LibraryAPIService] Initiating download for: ${youtubeId}`);
 
     try {
-      const response = await fetch(`${this.apiUrl}/api/download`, {
+      const url = this.apiUrl ? `${this.apiUrl}/api/download` : '/api/library-proxy/download';
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +58,8 @@ export class LibraryAPIService {
    */
   async checkStatus(jobId: string): Promise<DownloadStatusResponse> {
     try {
-      const response = await fetch(`${this.apiUrl}/api/status/${jobId}`);
+      const url = this.apiUrl ? `${this.apiUrl}/api/status/${jobId}` : `/api/library-proxy/status/${jobId}`;
+      const response = await fetch(url);
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Unknown error' }));
@@ -74,7 +80,7 @@ export class LibraryAPIService {
    * @returns string - URL to stream audio
    */
   getStreamUrl(jobId: string): string {
-    return `${this.apiUrl}/api/stream/${jobId}`;
+    return this.apiUrl ? `${this.apiUrl}/api/stream/${jobId}` : `/api/library-proxy/stream/${jobId}`;
   }
 
   /**
