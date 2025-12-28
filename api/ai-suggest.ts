@@ -2,25 +2,14 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const BACKEND_URL = process.env.VITE_BACKEND_URL || 'http://flowstate-music.us-east-1.elasticbeanstalk.com';
 
-/**
- * Proxy to AWS backend for YouTube search (with audio preference logic)
- */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
+  // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const response = await fetch(`${BACKEND_URL}/api/youtube/search`, {
+    const response = await fetch(`${BACKEND_URL}/api/ai/suggest`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,10 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('Proxy error:', error);
     return res.status(500).json({
       error: 'Proxy request failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      results: [],
-      source: 'none',
-      count: 0
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }

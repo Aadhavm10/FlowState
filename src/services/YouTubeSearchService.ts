@@ -3,11 +3,14 @@ import { logger } from '../utils/logger';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 export class YouTubeSearchService {
-  private backendUrl: string;
+  private apiUrl: string;
 
   constructor() {
-    // Use AWS backend for YouTube search
-    this.backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    // In production (Vercel), use Vercel API proxy
+    // In dev, use local backend or AWS directly
+    this.apiUrl = import.meta.env.DEV
+      ? (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001')
+      : '';  // Empty string means use relative URLs (Vercel API routes)
   }
 
   /**
@@ -17,7 +20,7 @@ export class YouTubeSearchService {
     try {
       logger.debug('Searching YouTube:', query);
 
-      const response = await fetchWithTimeout(`${this.backendUrl}/api/youtube/search`, {
+      const response = await fetchWithTimeout(`${this.apiUrl}/api/youtube-search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, maxResults })

@@ -3,11 +3,14 @@ import { logger } from '../utils/logger';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 export class AIService {
-  private backendUrl: string;
+  private apiUrl: string;
 
   constructor() {
-    // Use AWS backend for AI endpoints
-    this.backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    // In production (Vercel), use Vercel API proxy
+    // In dev, use local backend or AWS directly
+    this.apiUrl = import.meta.env.DEV
+      ? (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001')
+      : '';  // Empty string means use relative URLs (Vercel API routes)
   }
 
   /**
@@ -18,7 +21,7 @@ export class AIService {
       const count = this.determinePlaylistSize(prompt);
       logger.debug('Requesting AI suggestions:', { prompt, count });
 
-      const response = await fetchWithTimeout(`${this.backendUrl}/api/ai/suggest`, {
+      const response = await fetchWithTimeout(`${this.apiUrl}/api/ai-suggest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -49,7 +52,7 @@ export class AIService {
     try {
       logger.debug('Filtering', tracks.length, 'tracks');
 
-      const response = await fetchWithTimeout(`${this.backendUrl}/api/ai/filter`, {
+      const response = await fetchWithTimeout(`${this.apiUrl}/api/ai-filter`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
