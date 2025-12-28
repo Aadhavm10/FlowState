@@ -1,4 +1,4 @@
-/* Landing Page Styles */
+/* Landing Page Styles - Clean structure: background + buttons */
 
 .landing-page {
   position: relative;
@@ -8,7 +8,7 @@
   overflow-x: hidden;
 }
 
-/* Floating Lines Background */
+/* Floating Lines Background - Bottom layer */
 .landing-background {
   position: fixed;
   top: 0;
@@ -18,7 +18,7 @@
   z-index: 0;
 }
 
-/* Hero Section */
+/* Hero Section - Buttons float on top */
 .landing-hero {
   position: relative;
   z-index: 1;
@@ -27,12 +27,14 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  pointer-events: none;
 }
 
 .hero-content {
   max-width: 800px;
   width: 100%;
   text-align: center;
+  pointer-events: auto;
 }
 
 .hero-title {
@@ -158,27 +160,28 @@
   box-shadow: 0 8px 30px rgba(255, 255, 255, 0.2);
 }
 
-/* Content Section */
+/* Content Section - Floats on top */
 .landing-content-section {
   position: relative;
   z-index: 1;
   min-height: 100vh;
   padding: 4rem 2rem;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.5) 100%);
+  pointer-events: none;
 }
 
 .content-container {
   max-width: 1200px;
   margin: 0 auto;
+  pointer-events: auto;
 }
 
-/* Footer */
+/* Footer - Floats on top */
 .landing-footer {
   position: relative;
   z-index: 1;
   padding: 3rem 2rem;
   text-align: center;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.8) 100%);
+  pointer-events: none;
 }
 
 .footer-links {
@@ -186,6 +189,7 @@
   gap: 2rem;
   justify-content: center;
   align-items: center;
+  pointer-events: auto;
 }
 
 .footer-link {
@@ -216,7 +220,7 @@
   flex-shrink: 0;
 }
 
-/* AI Search Panel (existing component) */
+/* AI Search Panel */
 .ai-search-panel {
   margin: 40px 0;
 }

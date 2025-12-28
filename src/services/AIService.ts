@@ -82,6 +82,10 @@ export class AIService {
    * Determine playlist size based on query specificity
    */
   determinePlaylistSize(prompt: string): number {
+    // LIMITING TEMPORARILY DISABLED - returning fixed size
+    return 30; // Fixed size for now
+
+    /* COMMENTED OUT - Original limiting logic
     const lowerPrompt = prompt.toLowerCase();
 
     // Very specific (one song or artist)
@@ -113,5 +117,6 @@ export class AIService {
 
     // Default medium size
     return 12;
+    */
   }
 }

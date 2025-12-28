@@ -16,15 +16,56 @@ interface Track {
 }
 
 /**
+ * Retry wrapper with exponential backoff for rate limit handling
+ * TEMPORARILY DISABLED strict rate limiting - will retry aggressively
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 5, // Increased from 3
+  initialDelay: number = 500 // Start with 500ms
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+
+      // Check if it's a rate limit error
+      const isRateLimitError =
+        error?.message?.includes('Too many requests') ||
+        error?.status === 429 ||
+        error?.error?.message?.includes('rate limit');
+
+      if (isRateLimitError && attempt < maxRetries - 1) {
+        // Exponential backoff: 500ms, 1s, 2s, 4s, 8s
+        const delay = initialDelay * Math.pow(2, attempt);
+        console.log(`Rate limited. Retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+
+      // If not rate limit or max retries reached, throw
+      throw error;
+    }
+  }
+
+  throw lastError || new Error('Max retries reached');
+}
+
+/**
  * AI-powered song suggestions based on user prompt
  */
 async function suggestSongs(prompt: string, count: number = 20): Promise<SongSuggestion[]> {
   try {
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: `You are a music expert creating personalized playlists.
+    // Wrap Groq API call with retry logic
+    const completion = await retryWithBackoff(() =>
+      groq.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: `You are a music expert creating personalized playlists.
 Given a user's request, suggest ${count} specific, real songs that match the mood, genre, or theme.
 
 IMPORTANT:
@@ -37,16 +78,17 @@ IMPORTANT:
 
 Example output format:
 [{"title": "Blinding Lights", "artist": "The Weeknd"}, {"title": "Levitating", "artist": "Dua Lipa"}]`
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      model: 'mixtral-8x7b-32768',
-      temperature: 0.7,
-      max_tokens: 2048
-    });
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        model: 'mixtral-8x7b-32768',
+        temperature: 0.7,
+        max_tokens: 2048
+      })
+    );
 
     const content = completion.choices[0]?.message?.content || '[]';
 
@@ -74,11 +116,13 @@ async function filterRealSongs(tracks: Track[]): Promise<Track[]> {
       .map((t, i) => `${i}: "${t.title}" by ${t.artist}`)
       .join('\n');
 
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: `You are a music content validator. Your job is to filter out non-music content.
+    // Wrap Groq API call with retry logic
+    const completion = await retryWithBackoff(() =>
+      groq.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: `You are a music content validator. Your job is to filter out non-music content.
 
 REJECT these types:
 - Compilation albums (e.g., "Greatest Hits", "Best of...")
@@ -99,16 +143,17 @@ ACCEPT these types:
 
 Return ONLY a JSON array of the INDEX NUMBERS that are valid individual songs.
 Example: [0, 2, 3, 5, 7]`
-        },
-        {
-          role: 'user',
-          content: trackList
-        }
-      ],
-      model: 'mixtral-8x7b-32768',
-      temperature: 0.2,
-      max_tokens: 1024
-    });
+          },
+          {
+            role: 'user',
+            content: trackList
+          }
+        ],
+        model: 'mixtral-8x7b-32768',
+        temperature: 0.2,
+        max_tokens: 1024
+      })
+    );
 
     const content = completion.choices[0]?.message?.content || '[]';
 

@@ -40,3 +40,7 @@ coverage/
 # Misc
 .claude/
 .vercel
+
+# Deployment artifacts
+*.zip
+*.tar.gz

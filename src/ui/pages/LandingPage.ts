@@ -155,9 +155,9 @@ export class LandingPage {
       // Show AI search section and trigger generation
       this.showContent('search');
 
-      // Trigger the AI search panel's generation
-      const aiSearchInput = this.element.querySelector('.ai-search-input') as HTMLInputElement;
-      const aiSearchButton = this.element.querySelector('.ai-search-button') as HTMLButtonElement;
+      // Trigger the AI search panel's generation with correct IDs
+      const aiSearchInput = this.element.querySelector('#ai-prompt-landing') as HTMLInputElement;
+      const aiSearchButton = this.element.querySelector('#generate-btn-landing') as HTMLButtonElement;
       if (aiSearchInput && aiSearchButton) {
         aiSearchInput.value = prompt;
         aiSearchButton.click();
@@ -185,19 +185,21 @@ export class LandingPage {
       this.showContent('playlists');
     });
 
-    // Footer links (placeholders for now)
-    const githubLink = this.element.querySelector('#github-link');
-    const portfolioLink = this.element.querySelector('#portfolio-link');
+    // Footer links
+    const githubLink = this.element.querySelector('#github-link') as HTMLAnchorElement;
+    const portfolioLink = this.element.querySelector('#portfolio-link') as HTMLAnchorElement;
 
-    githubLink?.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('GitHub link clicked - add your GitHub URL');
-    });
+    if (githubLink) {
+      githubLink.href = 'https://github.com/Aadhavm10/FlowState';
+      githubLink.target = '_blank';
+      githubLink.rel = 'noopener noreferrer';
+    }
 
-    portfolioLink?.addEventListener('click', (e) => {
-      e.preventDefault();
-      console.log('Portfolio link clicked - add your portfolio URL');
-    });
+    if (portfolioLink) {
+      portfolioLink.href = 'https://aadhavmani.com/';
+      portfolioLink.target = '_blank';
+      portfolioLink.rel = 'noopener noreferrer';
+    }
   }
 
   private showContent(view: 'search' | 'playlists'): void {

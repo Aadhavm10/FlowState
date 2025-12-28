@@ -33,8 +33,8 @@ const playlistLimiter = rateLimit({
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Limit request body size
 
-// Apply rate limiting to API routes
-app.use('/api', apiLimiter);
+// TEMPORARILY DISABLED - Rate limiting commented out for testing
+// app.use('/api', apiLimiter);
 
 // Log all requests
 app.use((req, res, next) => {
@@ -47,7 +47,8 @@ const fs = require('fs');
 const { Groq } = require('groq-sdk');
 
 // Groq AI endpoint
-app.post('/api/groq-ai', playlistLimiter, async (req, res) => {
+// TEMPORARILY DISABLED playlistLimiter for testing
+app.post('/api/groq-ai', async (req, res) => {
   try {
     const { action, prompt, count, tracks } = req.body;
 
@@ -236,11 +237,16 @@ app.post('/api/youtube-search', async (req, res) => {
       }
     }
 
-    // Try Piped API fallback
+    // Try Piped API fallback - prioritize working instances
     const pipedInstances = [
+      'https://pipedapi.tokhmi.xyz',
+      'https://watchapi.whatever.social',
+      'https://pipedapi.moomoo.me',
+      'https://pipedapi.pfcd.me',
+      'https://pipedapi.syncpundit.io',
+      'https://api.piped.yt',
       'https://pipedapi.kavin.rocks',
-      'https://api-piped.mha.fi',
-      'https://piped-api.privacy.com.de'
+      'https://api-piped.mha.fi'
     ];
 
     for (const instance of pipedInstances) {
@@ -275,11 +281,14 @@ app.post('/api/youtube-search', async (req, res) => {
       }
     }
 
-    // Fallback: try Invidious
+    // Fallback: try Invidious - updated working instances
     const invidiousInstances = [
-      'https://invidious.snopyta.org',
-      'https://yewtu.be',
-      'https://invidious.kavin.rocks'
+      'https://inv.tux.pizza',
+      'https://invidious.privacyredirect.com',
+      'https://invidious.fdn.fr',
+      'https://inv.us.projectsegfau.net',
+      'https://vid.puffyan.us',
+      'https://invidious.perennialte.ch'
     ];
 
     for (const instance of invidiousInstances) {

@@ -298,14 +298,15 @@ export class FloatingLines {
     this.camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
     this.camera.position.z = 1;
 
-    this.renderer = new WebGLRenderer({ antialias: true, alpha: false });
+    this.renderer = new WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer.setClearColor(0x000000, 0); // Transparent background
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.domElement.style.width = '100%';
     this.renderer.domElement.style.height = '100%';
     this.renderer.domElement.style.position = 'absolute';
     this.renderer.domElement.style.top = '0';
     this.renderer.domElement.style.left = '0';
-    this.renderer.domElement.style.zIndex = '0';
+    this.renderer.domElement.style.zIndex = '-1'; // Behind all content
 
     this.clock = new Clock();
 
@@ -459,8 +460,9 @@ export class FloatingLines {
     }
 
     if (this.options.interactive) {
-      this.renderer.domElement.addEventListener('pointermove', this.handlePointerMove);
-      this.renderer.domElement.addEventListener('pointerleave', this.handlePointerLeave);
+      // Track mouse on container instead of canvas since canvas is behind content
+      this.container.addEventListener('pointermove', this.handlePointerMove);
+      this.container.addEventListener('pointerleave', this.handlePointerLeave);
     }
   }
 
@@ -496,8 +498,8 @@ export class FloatingLines {
     }
 
     if (this.options.interactive) {
-      this.renderer.domElement.removeEventListener('pointermove', this.handlePointerMove);
-      this.renderer.domElement.removeEventListener('pointerleave', this.handlePointerLeave);
+      this.container.removeEventListener('pointermove', this.handlePointerMove);
+      this.container.removeEventListener('pointerleave', this.handlePointerLeave);
     }
 
     this.material.dispose();

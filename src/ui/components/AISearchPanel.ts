@@ -73,16 +73,22 @@ export class AISearchPanel {
         this.actions.savePlaylist(playlist);
         this.actions.setQueue(playlist.tracks);
 
+        // Start playing the first track
+        if (playlist.tracks.length > 0) {
+          this.actions.setCurrentTrack(playlist.tracks[0]);
+          this.actions.setPlaying(true);
+        }
+
         statusDiv.style.display = 'none';
         successDiv.style.display = 'flex';
         const successText = successDiv.querySelector('.success-text') as HTMLElement;
-        successText.textContent = `Created "${playlist.name}" with ${playlist.tracks.length} tracks!`;
+        successText.textContent = `Created "${playlist.name}" with ${playlist.tracks.length} tracks! Now playing...`;
 
         promptInput.value = '';
 
         setTimeout(() => {
           successDiv.style.display = 'none';
-        }, 3000);
+        }, 4000);
 
       } catch (error) {
         console.error('Playlist generation failed:', error);

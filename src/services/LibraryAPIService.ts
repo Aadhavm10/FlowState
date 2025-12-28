@@ -10,7 +10,7 @@ export class LibraryAPIService {
   constructor() {
     // Use environment variable for backend URL
     // In development: http://localhost:3001
-    // In production: https://flowstate-backend.onrender.com
+    // In production: http://flowstate-music.us-east-1.elasticbeanstalk.com
     this.apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
     console.log(`[LibraryAPIService] Initialized with backend URL: ${this.apiUrl}`);
   }
