@@ -15,6 +15,7 @@ async function retryWithBackoff<T>(
       const isRateLimit = error?.status === 429 || error?.message?.includes('rate limit');
       if (isRateLimit && attempt < maxRetries - 1) {
         const delay = 500 * Math.pow(2, attempt);
+        console.log(`[AI Suggest] Rate limited. Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
@@ -39,18 +40,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    console.log('[AI Suggest] Handler invoked');
+
     const { prompt, count = 20 } = req.body;
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
+    console.log('[AI Suggest] Checking GROQ_API_KEY...');
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      throw new Error('GROQ_API_KEY not configured');
+      throw new Error('GROQ_API_KEY not configured in Vercel environment');
     }
 
+    if (!apiKey.startsWith('gsk_')) {
+      throw new Error('GROQ_API_KEY appears to be invalid (should start with gsk_)');
+    }
+
+    console.log('[AI Suggest] API key validated, creating Groq client');
     const groq = new Groq({ apiKey });
 
+    console.log(`[AI Suggest] Requesting ${count} suggestions for: "${prompt}"`);
     const completion = await retryWithBackoff(() =>
       groq.chat.completions.create({
         messages: [
@@ -62,7 +72,7 @@ Return ONLY a JSON array of objects with "title" and "artist" fields.`
           },
           { role: 'user', content: prompt }
         ],
-        model: 'llama-3.3-70b-versatile',
+        model: 'mixtral-8x7b-32768',
         temperature: 0.7,
         max_tokens: 2048
       })
@@ -75,10 +85,16 @@ Return ONLY a JSON array of objects with "title" and "artist" fields.`
     }
 
     const suggestions = JSON.parse(jsonMatch[0]).slice(0, count);
+    console.log(`[AI Suggest] Successfully generated ${suggestions.length} suggestions`);
+
     return res.status(200).json({ suggestions, count: suggestions.length });
 
   } catch (error) {
     console.error('[AI Suggest] Error:', error);
+    console.error('[AI Suggest] Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return res.status(500).json({
       error: 'AI suggestion failed',
       message: error instanceof Error ? error.message : 'Unknown error'

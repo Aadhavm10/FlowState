@@ -15,6 +15,7 @@ async function retryWithBackoff<T>(
       const isRateLimit = error?.status === 429 || error?.message?.includes('rate limit');
       if (isRateLimit && attempt < maxRetries - 1) {
         const delay = 500 * Math.pow(2, attempt);
+        console.log(`[AI Filter] Rate limited. Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
@@ -39,18 +40,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    console.log('[AI Filter] Handler invoked');
+
     const { tracks } = req.body;
     if (!tracks || !Array.isArray(tracks)) {
       return res.status(400).json({ error: 'Tracks array required' });
     }
 
+    console.log('[AI Filter] Checking GROQ_API_KEY...');
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      throw new Error('GROQ_API_KEY not configured');
+      throw new Error('GROQ_API_KEY not configured in Vercel environment');
     }
 
+    if (!apiKey.startsWith('gsk_')) {
+      throw new Error('GROQ_API_KEY appears to be invalid (should start with gsk_)');
+    }
+
+    console.log('[AI Filter] API key validated, creating Groq client');
     const groq = new Groq({ apiKey });
+
     const trackList = tracks.map((t: any, i: number) => `${i}: "${t.title}" by ${t.artist}`).join('\n');
+    console.log(`[AI Filter] Filtering ${tracks.length} tracks`);
 
     const completion = await retryWithBackoff(() =>
       groq.chat.completions.create({
@@ -62,7 +73,7 @@ Return ONLY a JSON array of valid song index numbers. Example: [0, 2, 5]`
           },
           { role: 'user', content: trackList }
         ],
-        model: 'llama-3.3-70b-versatile',
+        model: 'mixtral-8x7b-32768',
         temperature: 0.2,
         max_tokens: 1024
       })
@@ -75,6 +86,8 @@ Return ONLY a JSON array of valid song index numbers. Example: [0, 2, 5]`
       .filter((i: number) => i >= 0 && i < tracks.length)
       .map((i: number) => tracks[i]);
 
+    console.log(`[AI Filter] Filtered: ${tracks.length} → ${validTracks.length} tracks`);
+
     return res.status(200).json({
       validTracks,
       originalCount: tracks.length,
@@ -83,6 +96,10 @@ Return ONLY a JSON array of valid song index numbers. Example: [0, 2, 5]`
 
   } catch (error) {
     console.error('[AI Filter] Error:', error);
+    console.error('[AI Filter] Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     // On error, return all tracks (better than failing)
     return res.status(200).json({
       validTracks: req.body.tracks || [],
