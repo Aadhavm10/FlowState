@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-27T00:00:00Z",
+  "genres": [
+    {
+      "id": "electronic",
+      "name": "Electronic",
+      "description": "Electronic dance music and beats",
+      "color": "#8B5CF6",
+      "songs": [
+        {
+          "id": "placeholder-1",
+          "title": "Placeholder - Replace with your catalog",
+          "artist": "Catalog Coming Soon",
+          "youtubeId": "dQw4w9WgXcQ",
+          "duration": 213,
+          "thumbnailUrl": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+        }
+      ]
+    },
+    {
+      "id": "hiphop",
+      "name": "Hip Hop",
+      "description": "Hip hop and rap music",
+      "color": "#EC4899",
+      "songs": [
+        {
+          "id": "placeholder-2",
+          "title": "Add Your Songs Here",
+          "artist": "Full Catalog Coming Soon",
+          "youtubeId": "dQw4w9WgXcQ",
+          "duration": 213,
+          "thumbnailUrl": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+        }
+      ]
+    },
+    {
+      "id": "rock",
+      "name": "Rock",
+      "description": "Rock and alternative music",
+      "color": "#EF4444",
+      "songs": [
+        {
+          "id": "placeholder-3",
+          "title": "Sample Song",
+          "artist": "Replace Me",
+          "youtubeId": "dQw4w9WgXcQ",
+          "duration": 213,
+          "thumbnailUrl": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+        }
+      ]
+    }
+  ]
+}
