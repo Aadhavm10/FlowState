@@ -3,14 +3,11 @@ import { logger } from '../utils/logger';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
 export class YouTubeSearchService {
-  private apiBaseUrl: string;
+  private backendUrl: string;
 
   constructor() {
-    // In development, use Vite dev server proxy
-    // In production, use Vercel serverless functions
-    this.apiBaseUrl = import.meta.env.DEV
-      ? '/api'
-      : window.location.origin + '/api';
+    // Use AWS backend for YouTube search
+    this.backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
   }
 
   /**
@@ -20,7 +17,7 @@ export class YouTubeSearchService {
     try {
       logger.debug('Searching YouTube:', query);
 
-      const response = await fetchWithTimeout(`${this.apiBaseUrl}/youtube-search`, {
+      const response = await fetchWithTimeout(`${this.backendUrl}/api/youtube/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query, maxResults })

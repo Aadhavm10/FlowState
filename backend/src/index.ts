@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import audioRoutes from './routes/audio.js';
 import aiRoutes from './routes/ai.js';
+import youtubeRoutes from './routes/youtube.js';
 import { cleanupOldFiles } from './services/ytdlp.js';
 
 // Load environment variables
@@ -57,6 +58,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api', audioRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/youtube', youtubeRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -100,6 +102,7 @@ Endpoints:
   GET  /api/stream/:jobId    - Stream audio file
   POST /api/ai/suggest       - Generate AI song suggestions
   POST /api/ai/filter        - Filter playlists/compilations
+  POST /api/youtube/search   - Search YouTube videos
   `);
 });
 
