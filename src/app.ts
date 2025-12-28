@@ -156,16 +156,15 @@ export class App {
     });
 
     // Update position as track plays
+    let isSeeking = false;
     this.audioBridge.onTimeUpdate((time) => {
-      this.actions.setPosition(time);
+      // Don't update position while seeking
+      if (!isSeeking) {
+        this.actions.setPosition(time);
+      }
     });
 
     // Listen for manual position changes (seeking)
-    let lastNaturalPosition = 0;
-    this.audioBridge.onTimeUpdate((time) => {
-      lastNaturalPosition = time;
-    });
-
     this.store.selectSubscribe(
       state => state.playback.position,
       (position) => {
@@ -174,10 +173,16 @@ export class App {
         const currentTime = this.audioBridge.getCurrentTime();
         const diff = Math.abs(position - currentTime);
 
-        // If difference is > 1 second, it's a manual seek
-        if (diff > 1) {
-          logger.info(`Seeking to ${position.toFixed(1)}s`);
+        // If difference is > 0.5 seconds, it's a manual seek (reduced from 1 second for better responsiveness)
+        if (diff > 0.5) {
+          logger.info(`Seeking to ${position.toFixed(1)}s (diff: ${diff.toFixed(1)}s)`);
+          isSeeking = true;
           this.audioBridge.seekTo(position);
+
+          // Reset seeking flag after a short delay
+          setTimeout(() => {
+            isSeeking = false;
+          }, 200);
         }
       }
     );
