@@ -25,19 +25,21 @@ export async function downloadAudio(
   jobId: string
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const outputPath = path.join(TEMP_DIR, `${jobId}.webm`);
+    const outputPath = path.join(TEMP_DIR, `${jobId}.opus`);
 
     console.log(`[yt-dlp] Starting download: ${youtubeId} -> ${outputPath}`);
 
     // yt-dlp command with optimized settings
     const ytdlp = spawn('yt-dlp', [
       '-x', // Extract audio
-      '--audio-format', 'webm', // Use webm (faster, smaller than mp3)
+      '--audio-format', 'opus', // Use opus (well-supported, good quality)
       '--audio-quality', '0', // Best quality
       '-o', outputPath,
       '--no-playlist', // Don't download playlists
-      '--no-warnings', // Suppress warnings
+      '--quiet', // Less verbose output
       '--no-check-certificate', // Skip certificate validation (some proxies)
+      '--extract-audio', // Force audio extraction
+      '--prefer-free-formats', // Prefer free formats
       `https://www.youtube.com/watch?v=${youtubeId}`
     ]);
 
