@@ -74,11 +74,15 @@ export class PageManager {
       this.visualizerPage.hide();
       document.body.classList.remove('page-visualizer');
       document.body.classList.add('page-landing');
+      // Update state so footer shows on landing page
+      this.actions.setActiveTab('search');
     } else {
       this.landingPage.hide();
       this.visualizerPage.show();
       document.body.classList.remove('page-landing');
       document.body.classList.add('page-visualizer');
+      // Update state so footer hides on visualizer page
+      this.actions.setActiveTab('visualizer');
     }
   }
 

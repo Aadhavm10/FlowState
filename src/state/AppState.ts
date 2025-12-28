@@ -83,7 +83,7 @@ export const initialAppState: AppState = {
     error: null
   },
   ui: {
-    activeTab: 'visualizer',
+    activeTab: 'search',
     isPanelCollapsed: false,
     visualizerSettings: {
       amplitude: 2.0,
