@@ -132,6 +132,16 @@ export class App {
             await this.audioBridge.switchToYouTube(track.youtubeId);
             this.actions.setAudioSource('youtube');
             this.actions.setDuration(track.duration);
+
+            // Auto-play after loading completes
+            // Small delay to ensure video is fully ready
+            setTimeout(() => {
+              const shouldPlay = this.store.getState().playback.isPlaying;
+              if (shouldPlay) {
+                logger.info('Auto-playing track after load');
+                this.audioBridge.play();
+              }
+            }, 500);
           } catch (error) {
             logger.error('Failed to load track:', error);
           }

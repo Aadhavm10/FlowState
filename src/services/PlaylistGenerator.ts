@@ -39,7 +39,7 @@ export class PlaylistGenerator {
       // Step 2: Search YouTube for each suggestion (in parallel)
       logger.info('Step 2: Searching YouTube for each song...');
       const searchPromises = suggestions.map(async (suggestion) => {
-        const query = `${suggestion.artist} ${suggestion.title} official`;
+        const query = `${suggestion.artist} ${suggestion.title} audio`;
         try {
           const results = await this.searchService.search(query, 1);
 

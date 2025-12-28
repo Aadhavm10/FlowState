@@ -19,10 +19,16 @@ async function searchYouTubeAPI(query: string, maxResults: number): Promise<Vide
     throw new Error('YouTube API key not configured');
   }
 
+  // Prefer audio versions by appending "audio" to query
+  // This helps YouTube prioritize official audio uploads over music videos
+  const audioQuery = query.toLowerCase().includes('audio') || query.toLowerCase().includes('official')
+    ? query
+    : `${query} audio`;
+
   const url = new URL('https://www.googleapis.com/youtube/v3/search');
   url.searchParams.set('part', 'snippet');
-  url.searchParams.set('q', query);
-  url.searchParams.set('maxResults', maxResults.toString());
+  url.searchParams.set('q', audioQuery);
+  url.searchParams.set('maxResults', (maxResults * 2).toString()); // Fetch more to filter
   url.searchParams.set('type', 'video');
   url.searchParams.set('videoCategoryId', '10'); // Music category
   url.searchParams.set('key', apiKey);
@@ -39,13 +45,31 @@ async function searchYouTubeAPI(query: string, maxResults: number): Promise<Vide
     return [];
   }
 
-  return data.items.map((item: any) => ({
+  const allResults = data.items.map((item: any) => ({
     videoId: item.id.videoId,
     title: item.snippet.title,
     channelTitle: item.snippet.channelTitle,
     thumbnailUrl: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
     duration: 'PT0S' // Would need separate API call for duration
   }));
+
+  // Sort results: prioritize "Audio" over "Video" in title
+  const sortedResults = allResults.sort((a: VideoResult, b: VideoResult) => {
+    const aHasAudio = /\b(audio|topic)\b/i.test(a.title);
+    const bHasAudio = /\b(audio|topic)\b/i.test(b.title);
+    const aHasVideo = /\b(video|music video|official video|mv)\b/i.test(a.title);
+    const bHasVideo = /\b(video|music video|official video|mv)\b/i.test(b.title);
+
+    // Prioritize: Audio > Neither > Video
+    if (aHasAudio && !bHasAudio) return -1;
+    if (!aHasAudio && bHasAudio) return 1;
+    if (!aHasVideo && bHasVideo) return -1;
+    if (aHasVideo && !bHasVideo) return 1;
+    return 0;
+  });
+
+  // Return only requested amount after sorting
+  return sortedResults.slice(0, maxResults);
 }
 
 /**

@@ -68,12 +68,16 @@ export class NowPlayingFooter {
     });
 
     // Progress slider - seek within song
-    progressSlider.addEventListener('input', (e) => {
+    const handleSeek = (e: Event) => {
       const percentage = parseInt((e.target as HTMLInputElement).value);
       const duration = this.store.getState().playback.duration;
       const newPosition = (percentage / 100) * duration;
       this.actions.setPosition(newPosition);
-    });
+    };
+
+    // Use both 'input' (while dragging) and 'change' (on click/release) events
+    progressSlider.addEventListener('input', handleSeek);
+    progressSlider.addEventListener('change', handleSeek);
 
     this.unsubscribe = this.store.selectSubscribe(
       state => ({
@@ -81,17 +85,18 @@ export class NowPlayingFooter {
         isPlaying: state.playback.isPlaying,
         position: state.playback.position,
         duration: state.playback.duration,
-        volume: state.playback.volume
+        volume: state.playback.volume,
+        activeTab: state.ui.activeTab
       }),
-      ({ track, isPlaying, position, duration, volume }) => {
-        this.updateDisplay(track, isPlaying, position, duration, volume);
+      ({ track, isPlaying, position, duration, volume, activeTab }) => {
+        this.updateDisplay(track, isPlaying, position, duration, volume, activeTab);
       }
     );
 
     return this.element;
   }
 
-  private updateDisplay(track: any, isPlaying: boolean, position: number, duration: number, volume: number): void {
+  private updateDisplay(track: any, isPlaying: boolean, position: number, duration: number, volume: number, activeTab?: string): void {
     const thumbnail = this.element.querySelector('.footer-thumbnail') as HTMLImageElement;
     const title = this.element.querySelector('.footer-title') as HTMLElement;
     const artist = this.element.querySelector('.footer-artist') as HTMLElement;
@@ -100,6 +105,12 @@ export class NowPlayingFooter {
     const currentTimeEl = this.element.querySelector('.footer-current-time') as HTMLElement;
     const countdownEl = this.element.querySelector('.footer-countdown') as HTMLElement;
     const volumeSlider = this.element.querySelector('.footer-volume-slider') as HTMLInputElement;
+
+    // Hide footer when visualizer is active
+    if (activeTab === 'visualizer') {
+      this.element.style.display = 'none';
+      return;
+    }
 
     if (track) {
       this.element.style.display = 'flex';
