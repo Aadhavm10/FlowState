@@ -67,17 +67,8 @@ export class NowPlayingFooter {
       this.actions.setVolume(volume);
     });
 
-    // Progress slider - seek within song
-    const handleSeek = (e: Event) => {
-      const percentage = parseInt((e.target as HTMLInputElement).value);
-      const duration = this.store.getState().playback.duration;
-      const newPosition = (percentage / 100) * duration;
-      this.actions.setPosition(newPosition);
-    };
-
-    // Use both 'input' (while dragging) and 'change' (on click/release) events
-    progressSlider.addEventListener('input', handleSeek);
-    progressSlider.addEventListener('change', handleSeek);
+    // Disable progress slider interaction - just for display
+    progressSlider.style.pointerEvents = 'none';
 
     this.unsubscribe = this.store.selectSubscribe(
       state => ({
