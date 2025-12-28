@@ -1,9 +1,22 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Groq from 'groq-sdk';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
-});
+/**
+ * Get Groq client with validation
+ */
+function getGroqClient(): Groq {
+  const apiKey = process.env.GROQ_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('GROQ_API_KEY environment variable is not set. Please configure it in Vercel dashboard.');
+  }
+
+  if (!apiKey.startsWith('gsk_')) {
+    throw new Error('GROQ_API_KEY appears to be invalid (should start with gsk_)');
+  }
+
+  return new Groq({ apiKey });
+}
 
 interface SongSuggestion {
   title: string;
@@ -57,7 +70,7 @@ async function retryWithBackoff<T>(
 /**
  * AI-powered song suggestions based on user prompt
  */
-async function suggestSongs(prompt: string, count: number = 20): Promise<SongSuggestion[]> {
+async function suggestSongs(groq: Groq, prompt: string, count: number = 20): Promise<SongSuggestion[]> {
   try {
     // Wrap Groq API call with retry logic
     const completion = await retryWithBackoff(() =>
@@ -110,7 +123,7 @@ Example output format:
 /**
  * Filter out non-music content (playlists, compilations, etc.)
  */
-async function filterRealSongs(tracks: Track[]): Promise<Track[]> {
+async function filterRealSongs(groq: Groq, tracks: Track[]): Promise<Track[]> {
   try {
     const trackList = tracks
       .map((t, i) => `${i}: "${t.title}" by ${t.artist}`)
@@ -196,15 +209,37 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Initialize Groq client with error handling
+  let groq: Groq;
+  try {
+    console.log('[Groq AI] Handler invoked');
+    console.log('[Groq AI] Checking GROQ_API_KEY...');
+    console.log('[Groq AI] API key present:', !!process.env.GROQ_API_KEY);
+
+    groq = getGroqClient();
+    console.log('[Groq AI] Groq client initialized successfully');
+  } catch (error) {
+    console.error('[Groq AI] Failed to initialize Groq client:', error);
+    return res.status(500).json({
+      error: 'Groq API configuration error',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      hint: 'Check that GROQ_API_KEY is set in Vercel environment variables'
+    });
+  }
+
   try {
     const { action, prompt, tracks, count } = req.body;
+    console.log('[Groq AI] Action:', action);
 
     if (action === 'suggest') {
       if (!prompt) {
         return res.status(400).json({ error: 'Prompt is required' });
       }
 
-      const suggestions = await suggestSongs(prompt, count);
+      console.log('[Groq AI] Suggesting songs for prompt:', prompt);
+      const suggestions = await suggestSongs(groq, prompt, count);
+      console.log('[Groq AI] Generated', suggestions.length, 'suggestions');
+
       return res.status(200).json({
         suggestions,
         count: suggestions.length
@@ -216,7 +251,10 @@ export default async function handler(
         return res.status(400).json({ error: 'Tracks array is required' });
       }
 
-      const validTracks = await filterRealSongs(tracks);
+      console.log('[Groq AI] Filtering', tracks.length, 'tracks');
+      const validTracks = await filterRealSongs(groq, tracks);
+      console.log('[Groq AI] Filtered to', validTracks.length, 'valid tracks');
+
       return res.status(200).json({
         validTracks,
         originalCount: tracks.length,
@@ -227,7 +265,12 @@ export default async function handler(
     return res.status(400).json({ error: 'Invalid action. Use "suggest" or "filter"' });
 
   } catch (error) {
-    console.error('Groq AI error:', error);
+    console.error('[Groq AI] Handler error:', error);
+    console.error('[Groq AI] Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+
     return res.status(500).json({
       error: 'AI service failed',
       message: error instanceof Error ? error.message : 'Unknown error'
