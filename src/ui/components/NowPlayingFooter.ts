@@ -4,6 +4,8 @@ import { AppState } from '../../state/AppState';
 
 export class NowPlayingFooter {
   private element: HTMLElement;
+  private queuePanel: HTMLElement;
+  private isQueueOpen: boolean = false;
   private unsubscribe: (() => void) | null = null;
 
   constructor(
@@ -13,6 +15,10 @@ export class NowPlayingFooter {
     this.element = document.createElement('footer');
     this.element.className = 'now-playing-footer';
     this.element.style.display = 'none';
+
+    this.queuePanel = document.createElement('div');
+    this.queuePanel.className = 'queue-panel';
+    this.queuePanel.style.display = 'none';
   }
 
   render(): HTMLElement {
@@ -41,7 +47,12 @@ export class NowPlayingFooter {
         <span class="footer-volume-label">VOL</span>
         <input type="range" class="footer-volume-slider" min="0" max="100" value="100" />
       </div>
+
+      <button class="footer-btn queue-btn" title="Show Queue">☰</button>
     `;
+
+    // Add queue panel to body
+    document.body.appendChild(this.queuePanel);
 
     const playPauseBtn = this.element.querySelector('.play-pause') as HTMLButtonElement;
     const previousBtn = this.element.querySelector('.prev') as HTMLButtonElement;
@@ -70,6 +81,12 @@ export class NowPlayingFooter {
     // Disable progress slider interaction - just for display
     progressSlider.style.pointerEvents = 'none';
 
+    // Queue button
+    const queueBtn = this.element.querySelector('.queue-btn') as HTMLButtonElement;
+    queueBtn.addEventListener('click', () => {
+      this.toggleQueue();
+    });
+
     this.unsubscribe = this.store.selectSubscribe(
       state => ({
         track: state.playback.currentTrack,
@@ -77,10 +94,13 @@ export class NowPlayingFooter {
         position: state.playback.position,
         duration: state.playback.duration,
         volume: state.playback.volume,
-        activeTab: state.ui.activeTab
+        activeTab: state.ui.activeTab,
+        queue: state.queue.tracks,
+        currentIndex: state.queue.currentIndex
       }),
-      ({ track, isPlaying, position, duration, volume, activeTab }) => {
+      ({ track, isPlaying, position, duration, volume, activeTab, queue, currentIndex }) => {
         this.updateDisplay(track, isPlaying, position, duration, volume, activeTab);
+        this.updateQueue(queue, currentIndex);
       }
     );
 
@@ -136,7 +156,60 @@ export class NowPlayingFooter {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
+  private toggleQueue(): void {
+    this.isQueueOpen = !this.isQueueOpen;
+    this.queuePanel.style.display = this.isQueueOpen ? 'block' : 'none';
+  }
+
+  private updateQueue(tracks: any[], currentIndex: number): void {
+    if (!this.isQueueOpen || tracks.length === 0) {
+      return;
+    }
+
+    this.queuePanel.innerHTML = `
+      <div class="queue-header">
+        <h3>Queue (${tracks.length} songs)</h3>
+        <button class="queue-close" title="Close">×</button>
+      </div>
+      <div class="queue-list">
+        ${tracks.map((track, index) => `
+          <div class="queue-item ${index === currentIndex ? 'active' : ''}" data-index="${index}">
+            <span class="queue-number">${index + 1}</span>
+            <img src="${track.thumbnailUrl}" alt="${track.title}" class="queue-thumb" />
+            <div class="queue-info">
+              <div class="queue-title">${this.escapeHtml(track.title)}</div>
+              <div class="queue-artist">${this.escapeHtml(track.artist)}</div>
+            </div>
+            <span class="queue-duration">${this.formatTime(track.duration)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    // Add close button handler
+    const closeBtn = this.queuePanel.querySelector('.queue-close') as HTMLButtonElement;
+    closeBtn?.addEventListener('click', () => {
+      this.toggleQueue();
+    });
+
+    // Add track click handlers
+    this.queuePanel.querySelectorAll('.queue-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const index = parseInt((item as HTMLElement).dataset.index!);
+        this.actions.setCurrentTrack(tracks[index]);
+        this.actions.setPlaying(true);
+      });
+    });
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   destroy(): void {
     this.unsubscribe?.();
+    this.queuePanel.remove();
   }
 }

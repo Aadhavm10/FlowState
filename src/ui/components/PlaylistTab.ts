@@ -110,8 +110,7 @@ export class PlaylistTab {
           </div>
         </div>
         <div class="track-list">
-          ${playlist.tracks.slice(0, 5).map((track, i) => this.renderTrack(track, i)).join('')}
-          ${playlist.tracks.length > 5 ? `<div class="track-more">+ ${playlist.tracks.length - 5} more</div>` : ''}
+          ${playlist.tracks.map((track, i) => this.renderTrack(track, i)).join('')}
         </div>
       </div>
     `;
