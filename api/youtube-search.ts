@@ -33,10 +33,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Query is required' });
     }
 
-    const apiKey = process.env.YOUTUBE_API_KEY;
-    if (!apiKey) {
-      throw new Error('YOUTUBE_API_KEY not configured in Vercel environment');
+    // Load multiple API keys for quota rotation
+    const apiKeys = [
+      process.env.YOUTUBE_API_KEY,
+      process.env.YOUTUBE_API_KEY_2
+    ].filter(Boolean); // Remove undefined keys
+
+    if (apiKeys.length === 0) {
+      throw new Error('No YouTube API keys configured in Vercel environment');
     }
+
+    // Randomly select an API key to distribute load evenly
+    const apiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
+    console.log(`[YouTube Search] Using API key ${apiKeys.indexOf(apiKey) + 1} of ${apiKeys.length}`);
 
     // Prefer audio versions by appending "audio" to query
     const audioQuery = query.toLowerCase().includes('audio') || query.toLowerCase().includes('official')
