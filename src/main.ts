@@ -211,16 +211,9 @@ const App = () => {
     if (audioContext) return; // Already initialized
 
     audioContext = new window.AudioContext();
-    source = audioContext.createMediaElementSource(audio);
 
     // exposes audio time and frequency data
     analyser = audioContext.createAnalyser();
-
-    // pipe audio source through analyzer
-    source.connect(analyser);
-
-    // output audio to default speaker device
-    analyser.connect(audioContext.destination);
     analyser.fftSize = meshSegments * 4; // sampling rate
 
     // array holding 8-bit integers representing frequencies
@@ -228,6 +221,7 @@ const App = () => {
     dataArray = new Uint8Array(analyser.frequencyBinCount);
 
     // NEW: Initialize YouTube Music System
+    // The AudioBridge will handle connecting the audio element to the analyser
     initializeYouTubeSystem();
   }
 

@@ -117,12 +117,7 @@ export class NowPlayingFooter {
     const countdownEl = this.element.querySelector('.footer-countdown') as HTMLElement;
     const volumeSlider = this.element.querySelector('.footer-volume-slider') as HTMLInputElement;
 
-    // Hide footer when visualizer is active
-    if (activeTab === 'visualizer') {
-      this.element.style.display = 'none';
-      return;
-    }
-
+    // Show footer when track is playing (even on visualizer tab)
     if (track) {
       this.element.style.display = 'flex';
       thumbnail.src = track.thumbnailUrl || '';
