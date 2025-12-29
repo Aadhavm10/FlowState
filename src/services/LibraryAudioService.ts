@@ -14,38 +14,33 @@ export class LibraryAudioService {
   }
 
   /**
-   * Play song from library
-   * Downloads audio from backend, then plays through AudioBridge
+   * Play 30-second preview from library
+   * Uses cached MP3 previews for instant playback
    *
    * @param youtubeId - YouTube video ID
    * @param onReady - Callback when audio is ready to play
-   * @param onError - Callback if download/playback fails
+   * @param onError - Callback if playback fails
    */
   async playSong(
     youtubeId: string,
     onReady: () => void,
     onError: (error: Error) => void
   ): Promise<void> {
-    console.log(`[LibraryAudioService] Playing song: ${youtubeId}`);
+    console.log(`[LibraryAudioService] Playing preview: ${youtubeId}`);
 
     try {
-      // Step 1: Initiate download on backend
-      console.log('[LibraryAudioService] Step 1: Initiating backend download...');
-      const { jobId } = await this.apiService.initiateDownload(youtubeId);
+      // Get preview URL (immediate - no download wait)
+      const previewUrl = this.apiService.getPreviewUrl(youtubeId);
+      console.log(`[LibraryAudioService] Loading preview: ${previewUrl}`);
 
-      // Step 2: Wait for download to complete
-      console.log('[LibraryAudioService] Step 2: Waiting for download...');
-      const streamUrl = await this.apiService.waitForDownload(jobId);
+      // Switch AudioBridge to preview URL
+      await this.audioBridge.switchToFileUrl(previewUrl);
 
-      // Step 3: Switch AudioBridge to stream URL
-      console.log('[LibraryAudioService] Step 3: Loading audio into AudioBridge...');
-      await this.audioBridge.switchToFileUrl(streamUrl);
-
-      // Step 4: Notify caller that audio is ready
-      console.log('[LibraryAudioService] Step 4: Audio ready!');
+      // Notify caller that audio is ready
+      console.log('[LibraryAudioService] Preview loaded successfully');
       onReady();
     } catch (error) {
-      console.error('[LibraryAudioService] Failed to play song:', error);
+      console.error('[LibraryAudioService] Failed to play preview:', error);
       onError(error as Error);
     }
   }

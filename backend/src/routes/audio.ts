@@ -1,5 +1,5 @@
 import express from 'express';
-import { downloadAudio, getAudioStream, deleteAudioFile } from '../services/ytdlp.js';
+import { downloadAudio, getAudioStream, deleteAudioFile, streamPreview } from '../services/ytdlp.js';
 
 const router = express.Router();
 
@@ -202,6 +202,61 @@ router.get('/stream/:jobId', async (req, res) => {
     if (!res.headersSent) {
       res.status(500).json({
         error: 'Internal server error',
+        message: error.message
+      });
+    }
+  }
+});
+
+/**
+ * GET /api/preview/:youtubeId
+ * Stream 30-second MP3 preview (cached)
+ *
+ * Response: Audio stream (audio/mpeg)
+ */
+router.get('/preview/:youtubeId', async (req, res) => {
+  try {
+    const { youtubeId } = req.params;
+
+    if (!youtubeId || typeof youtubeId !== 'string') {
+      return res.status(400).json({
+        error: 'Missing or invalid youtubeId parameter'
+      });
+    }
+
+    console.log(`[Preview] Streaming preview: ${youtubeId}`);
+
+    // Get cached preview or download if needed
+    const stream = await streamPreview(youtubeId);
+
+    // Set headers for MP3 streaming
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache 1 year
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Allow CORS
+
+    // Pipe stream to response
+    stream.pipe(res);
+
+    stream.on('end', () => {
+      console.log(`[Preview] Stream complete: ${youtubeId}`);
+    });
+
+    stream.on('error', (error) => {
+      console.error(`[Preview] Stream error: ${error.message}`);
+      if (!res.headersSent) {
+        res.status(500).json({
+          error: 'Stream failed',
+          message: error.message
+        });
+      }
+    });
+
+  } catch (error: any) {
+    console.error('[Preview] Error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: 'Failed to get preview',
         message: error.message
       });
     }

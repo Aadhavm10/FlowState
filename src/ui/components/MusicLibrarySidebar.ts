@@ -15,6 +15,8 @@ export class MusicLibrarySidebar {
   private expandedGenres: Set<string> = new Set();
   private searchQuery: string = '';
   private isLoading: boolean = false;
+  private shuffledPlaylist: Song[] = [];
+  private currentTrackIndex: number = 0;
 
   constructor(
     private store: StateManager<AppState>,
@@ -61,6 +63,9 @@ export class MusicLibrarySidebar {
             placeholder="Search genres or songs..."
             aria-label="Search music"
           />
+          <button class="shuffle-all-btn" id="shuffle-all-btn" aria-label="Shuffle All Songs">
+            <i class="fas fa-random"></i> Shuffle All
+          </button>
         </div>
 
         <!-- Genres container (scrollable) -->
@@ -98,6 +103,12 @@ export class MusicLibrarySidebar {
       const target = e.target as HTMLInputElement;
       this.searchQuery = target.value.toLowerCase();
       this.refreshGenres();
+    });
+
+    // Shuffle all button
+    const shuffleBtn = this.element.querySelector('#shuffle-all-btn');
+    shuffleBtn?.addEventListener('click', () => {
+      this.shuffleAllSongs();
     });
 
     // Genre expansion and song clicks will be set up per genre
@@ -323,6 +334,45 @@ export class MusicLibrarySidebar {
         alert(`Failed to play "${song.title}"\n\nError: ${error.message}\n\nThe backend server may be sleeping. Please try again in 30 seconds.`);
       }
     );
+  }
+
+  /**
+   * Shuffle all songs from all genres and start playing
+   */
+  private shuffleAllSongs(): void {
+    if (!this.catalog || this.catalog.genres.length === 0) {
+      alert('No music catalog loaded');
+      return;
+    }
+
+    // Collect all songs from all genres
+    const allSongs: Song[] = [];
+    this.catalog.genres.forEach((genre) => {
+      allSongs.push(...genre.songs);
+    });
+
+    if (allSongs.length === 0) {
+      alert('No songs available to shuffle');
+      return;
+    }
+
+    console.log(`[MusicLibrarySidebar] Shuffling ${allSongs.length} songs...`);
+
+    // Fisher-Yates shuffle algorithm
+    const shuffled = [...allSongs];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    // Store shuffled playlist
+    this.shuffledPlaylist = shuffled;
+    this.currentTrackIndex = 0;
+
+    console.log(`[MusicLibrarySidebar] Shuffle complete! Starting with: ${shuffled[0].title}`);
+
+    // Play first song in shuffled playlist
+    this.playSong(shuffled[0]);
   }
 
   /**

@@ -16,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const AWS_BACKEND = 'http://flowstate-music.us-east-1.elasticbeanstalk.com';
 
-  // Extract the path to proxy (e.g., /api/download, /api/status/xxx, /api/stream/xxx)
+  // Extract the path to proxy (e.g., preview/abc123, health, download, etc.)
   const { path } = req.query;
   const targetPath = Array.isArray(path) ? path.join('/') : path || '';
   const targetUrl = `${AWS_BACKEND}/api/${targetPath}`;
@@ -27,13 +27,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const proxyResponse = await fetch(targetUrl, {
       method: req.method,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': req.headers['content-type'] || 'application/json',
       },
       body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
     });
 
-    const data = await proxyResponse.json();
+    // For audio streams (preview endpoint), pipe binary data
+    if (targetPath.startsWith('preview/')) {
+      const arrayBuffer = await proxyResponse.arrayBuffer();
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+      res.setHeader('Accept-Ranges', 'bytes');
+      return res.status(proxyResponse.status).send(Buffer.from(arrayBuffer));
+    }
 
+    // For JSON responses (health, download, status, etc.)
+    const data = await proxyResponse.json();
     return res.status(proxyResponse.status).json(data);
   } catch (error) {
     console.error('[Library Proxy] Error:', error);

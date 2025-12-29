@@ -20,6 +20,17 @@ export class LibraryAPIService {
   }
 
   /**
+   * Get stream URL for a 30-second MP3 preview (cached)
+   * @param youtubeId - YouTube video ID
+   * @returns string - URL to stream MP3 preview
+   */
+  getPreviewUrl(youtubeId: string): string {
+    return this.apiUrl
+      ? `${this.apiUrl}/api/preview/${youtubeId}`
+      : `/api/library-proxy/preview/${youtubeId}`;
+  }
+
+  /**
    * Initiate download of audio from YouTube
    * @param youtubeId - YouTube video ID
    * @returns Promise<DownloadJob> - Job details for polling
