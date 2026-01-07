@@ -6,8 +6,9 @@ export interface Track {
   title: string;
   artist: string;
   duration: number;      // Duration in seconds
-  thumbnailUrl: string;
-  youtubeId: string;
+  thumbnailUrl?: string;
+  url?: string;          // Local MP3 file URL
+  youtubeId?: string;    // YouTube video ID
 }
 
 /**
@@ -32,7 +33,7 @@ export interface PlaylistStats {
 }
 
 /**
- * YouTube search result
+ * Search result (legacy, currently unused)
  */
 export interface SearchResult {
   videoId: string;

@@ -12,7 +12,6 @@ export interface AppState {
     position: number;           // Current position in seconds
     duration: number;           // Total duration in seconds
     volume: number;             // 0-1
-    audioSource: 'file' | 'youtube';
     repeat: 'none' | 'one' | 'all';
     shuffle: boolean;
   };
@@ -63,7 +62,6 @@ export const initialAppState: AppState = {
     position: 0,
     duration: 0,
     volume: 1.0,
-    audioSource: 'file',
     repeat: 'none',
     shuffle: false
   },

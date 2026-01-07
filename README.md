@@ -1,119 +1,64 @@
-# FlowState
+# FlowState - 3D Audio Visualizer with AI Playlist Generation
 
-AI-powered music visualizer with intelligent playlist generation and immersive 3D audio visualization.
+A music application with two distinct systems:
+1. **3D Visualizer** - Local MP3 player with real-time 3D audio visualization
+2. **AI Playlist Generator** - Natural language → AI → YouTube playlists
 
-## Features
+## 🚀 Quick Start
 
-- **FloatingLines Background** - Elegant animated background with interactive parallax effects
-- **AI Playlist Generation** - Natural language playlist creation using Groq LLM (e.g., "late night drive")
-- **YouTube Integration** - Automatic song search with audio version prioritization
-- **3D Audio Visualization** - Real-time audio-reactive 3D visualization using Three.js
-- **Smart Playback** - Seek functionality, auto-advance, volume control
-- **Persistent Playlists** - Save and load playlists locally
-- **Responsive Design** - Works on desktop and mobile with glassmorphism UI
-
-## Tech Stack
-
-- **Frontend**: Vanilla TypeScript + Vite + Three.js
-- **Backend**: Express.js dev server + Vercel Serverless Functions
-- **AI**: Groq (llama-3.3-70b-versatile)
-- **APIs**: YouTube Data API v3, Piped/Invidious fallbacks
-- **State**: Custom Observer pattern (no frameworks)
-- **Audio**: YouTube IFrame API + Web Audio API
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 16+
-- Groq API key (get one at [console.groq.com](https://console.groq.com))
-- YouTube Data API v3 key (optional, for better search results)
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/Aadhavm10/FlowState.git
-cd FlowState
-```
-
-2. Install dependencies:
+### Local Development (MP3 Player Only)
 ```bash
 npm install
-```
-
-3. Create `.env` file:
-```bash
-cp .env.example .env
-```
-
-4. Add your API keys to `.env`:
-```env
-GROQ_API_KEY=your_groq_api_key_here
-YOUTUBE_API_KEY=your_youtube_api_key_here  # Optional
-```
-
-### Development
-
-Run both the Vite dev server and API server:
-
-Terminal 1:
-```bash
 npm run dev
 ```
+Open http://localhost:5173/
 
-Terminal 2:
+**Note:** AI playlist generation requires Vercel deployment (see below).
+
+### Deploy to Vercel (Full Features)
 ```bash
-npm run api
+npm run deploy
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+After deployment, configure environment variables in Vercel Dashboard:
+- `GROQ_API_KEY` - Your Groq AI API key
+- `YOUTUBE_API_KEY` - Your YouTube Data API v3 key
+- `YOUTUBE_API_KEY_2` - Second YouTube API key (optional)
 
-## Usage
+## 🎵 Two Music Systems
 
-1. **Generate Playlists**: Enter a natural language prompt (e.g., "chill study vibes") and click search
-2. **3D Visualizer**: Click "3D Visualizer" button to see your music come to life
-3. **My Playlists**: View and play your saved playlists
-4. **File Upload**: Upload local audio files in the visualizer page
+### System 1: Local MP3 Player (Works Locally)
+- 16 local MP3 files from `/public/` directory
+- 3D audio visualizer with Three.js
+- Real-time frequency analysis
+- Simple song list with search
 
-## API Rate Limits
+### System 2: AI Playlist Generator (Requires Vercel)
+- Type natural language prompts (e.g., "frolicking in a field")
+- Groq AI generates ~30 song suggestions
+- YouTube Data API searches for songs
+- AI filters out compilations
+- Plays via YouTube IFrame API
 
-- **General API**: 30 requests per 15 minutes
-- **Playlist Generation**: 10 playlists per hour
-- **Playlist Length**: 15-28 songs (automatically adjusted based on prompt)
+## 📦 API Endpoints
 
-## Deployment
+- `POST /api/ai-suggest` - Get AI song suggestions
+- `POST /api/ai-filter` - Filter compilations
+- `POST /api/youtube-search` - Search YouTube
+- `GET/POST /api/library-proxy/*` - AWS backend proxy
 
-Deploy to Vercel:
+## 🛠️ Commands
 
 ```bash
-vercel --prod
+npm run dev      # Start dev server (MP3s only)
+npm run build    # Build production bundle
+npm run preview  # Preview production build
+npm run deploy   # Deploy to Vercel
 ```
 
-Make sure to add your environment variables in the Vercel dashboard.
+## 📝 Notes
 
-## Project Structure
-
-```
-FlowState/
-├── src/
-│   ├── core/           # AudioBridge (file/YouTube audio abstraction)
-│   ├── services/       # AI, YouTube search, playlist management
-│   ├── state/          # Custom state management
-│   ├── ui/             # Pages and components
-│   ├── utils/          # Utilities
-│   └── main.ts         # Entry point
-├── api/                # Vercel serverless functions
-├── dev-server.js       # Local API development server
-└── vercel.json         # Vercel deployment config
-```
-
-## License
-
-MIT
-
-## Credits
-
-- FloatingLines shader adapted from shader art techniques
-- Three.js for 3D visualization
-- Groq for AI-powered playlist generation
+- The TypeScript warning about `/api/tsconfig.json` is harmless
+- AI features only work when deployed to Vercel
+- Local dev only supports the MP3 player system
+- See DEPLOYMENT.md for detailed deployment instructions

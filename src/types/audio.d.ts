@@ -1,5 +1,5 @@
 /**
- * Audio source abstraction for file uploads and YouTube playback
+ * Audio source abstraction for file uploads and YouTube
  */
 export interface AudioSource {
   type: 'file' | 'youtube';

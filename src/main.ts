@@ -6,10 +6,10 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import vertexShader from './shaders/vertex.vs.glsl';
 import fragmentShader from './shaders/fragment.fs.glsl';
 import './style.css';
-import './ui/styles/library.css';
+import './ui/styles/song-list.css';
 
-// NEW: Import YouTube Music System
-import { App as YouTubeApp } from './app';
+// NEW: Import Music System
+import { App as MusicApp } from './app';
 
 const App = () => {
   // Audio
@@ -23,8 +23,8 @@ const App = () => {
   const container = document.getElementById('app');
   container?.appendChild(audio);
 
-  // NEW: YouTube Music System instance
-  let youtubeApp: YouTubeApp;
+  // NEW: Music System instance
+  let musicApp: MusicApp;
 
   // Scene
   const scene = new THREE.Scene();
@@ -94,11 +94,10 @@ const App = () => {
       if (el && el.files) {
         const file = el.files[0];
 
-        // NEW: Use AudioBridge if YouTube system is initialized
-        if (youtubeApp) {
-          const bridge = youtubeApp.getAudioBridge();
-          bridge.switchToFile(file);
-          youtubeApp.getActions().setAudioSource('file');
+        // Use AudioBridge if Music system is initialized
+        if (musicApp) {
+          const bridge = musicApp.getAudioBridge();
+          bridge.loadFile(file);
         } else {
           // Fallback to original behavior
           audio.src = URL.createObjectURL(file);
@@ -146,23 +145,21 @@ const App = () => {
     const vizFileInput = document.getElementById('viz-file-input');
     vizFileInput?.addEventListener('change', async function (event) {
       const el = event.target as HTMLInputElement;
-      if (el && el.files && youtubeApp) {
+      if (el && el.files && musicApp) {
         const file = el.files[0];
-        const bridge = youtubeApp.getAudioBridge();
-        bridge.switchToFile(file);
-        youtubeApp.getActions().setAudioSource('file');
-        youtubeApp.getActions().setPlaying(true);
+        const bridge = musicApp.getAudioBridge();
+        bridge.loadFile(file);
+        musicApp.getActions().setPlaying(true);
       }
     });
 
     // NEW: Hook up UI load sample to AudioBridge
     const vizLoadSample = document.getElementById('viz-load-sample');
     vizLoadSample?.addEventListener('click', () => {
-      if (youtubeApp) {
-        const bridge = youtubeApp.getAudioBridge();
-        bridge.switchToFileUrl('./song.mp3');
-        youtubeApp.getActions().setAudioSource('file');
-        youtubeApp.getActions().setPlaying(true);
+      if (musicApp) {
+        const bridge = musicApp.getAudioBridge();
+        bridge.loadUrl('./song.mp3');
+        musicApp.getActions().setPlaying(true);
       } else {
         loadDefaultSong();
       }
@@ -220,21 +217,21 @@ const App = () => {
     // analyser.frequencyBinCount is equal to fftSize / 2
     dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-    // NEW: Initialize YouTube Music System
+    // Initialize Music System
     // The AudioBridge will handle connecting the audio element to the analyser
-    initializeYouTubeSystem();
+    initializeMusicSystem();
   }
 
-  // NEW: Initialize YouTube Music System
-  async function initializeYouTubeSystem() {
+  // Initialize Music System
+  async function initializeMusicSystem() {
     try {
-      console.log('Initializing YouTube Music System...');
-      youtubeApp = new YouTubeApp(audioContext, analyser, audio);
-      await youtubeApp.initialize();
-      console.log('YouTube Music System ready!');
+      console.log('Initializing Music System...');
+      musicApp = new MusicApp(audioContext, analyser, audio);
+      await musicApp.initialize();
+      console.log('Music System ready!');
     } catch (error) {
-      console.error('Failed to initialize YouTube Music System:', error);
-      // Continue without YouTube features
+      console.error('Failed to initialize Music System:', error);
+      // Continue without music features
     }
   }
 
@@ -293,10 +290,9 @@ const App = () => {
   }
 
   function loadDefaultSong() {
-    if (youtubeApp) {
-      const bridge = youtubeApp.getAudioBridge();
-      bridge.switchToFileUrl('./song.mp3');
-      youtubeApp.getActions().setAudioSource('file');
+    if (musicApp) {
+      const bridge = musicApp.getAudioBridge();
+      bridge.loadUrl('./song.mp3');
     } else {
       audio.src = './song.mp3';
       audio.load();
@@ -321,7 +317,7 @@ const App = () => {
   postProcessing();
   init();
 
-  // NEW: Initialize audio context immediately to load YouTube UI
+  // Initialize audio context immediately to load Music UI
   setupAudioContext();
 };
 

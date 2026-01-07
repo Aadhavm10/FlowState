@@ -1,20 +1,25 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { corsHeaders } from './utils/cors';
 
 /**
  * Proxy requests to AWS backend to avoid mixed content issues
  * HTTPS (Vercel) → HTTPS (this proxy) → HTTP (AWS backend)
+ *
+ * Environment variable required:
+ * - AWS_BACKEND_URL: AWS Elastic Beanstalk endpoint URL
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const AWS_BACKEND = 'http://flowstate-music.us-east-1.elasticbeanstalk.com';
+  // Get AWS backend URL from environment variable
+  const AWS_BACKEND = process.env.AWS_BACKEND_URL || 'http://flowstate-music.us-east-1.elasticbeanstalk.com';
 
   // Extract the path to proxy (e.g., preview/abc123, health, download, etc.)
   const { path } = req.query;

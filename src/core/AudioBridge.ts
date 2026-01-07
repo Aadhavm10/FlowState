@@ -122,7 +122,6 @@ class FileAudioSource implements AudioSource {
 
 /**
  * YouTubeAudioSource - Wraps YouTube IFrame Player
- * This will be implemented in Phase 2
  */
 class YouTubeAudioSource implements AudioSource {
   type: 'youtube' = 'youtube';
@@ -315,7 +314,7 @@ class YouTubeAudioSource implements AudioSource {
 
 /**
  * AudioBridge - Unified interface for file and YouTube playback
- * This allows the visualizer to work with both sources without modification
+ * Manages audio playback and connects to the visualizer
  */
 export class AudioBridge {
   private fileSource: FileAudioSource;
@@ -339,9 +338,9 @@ export class AudioBridge {
   }
 
   /**
-   * Switch to file playback
+   * Load and play a file
    */
-  switchToFile(file: File): void {
+  loadFile(file: File): void {
     this.disconnectActive();
     this.fileSource.loadFile(file);
     this.fileSource.connect(this.analyser);
@@ -349,9 +348,9 @@ export class AudioBridge {
   }
 
   /**
-   * Switch to file playback from URL
+   * Load and play from URL
    */
-  switchToFileUrl(url: string): void {
+  loadUrl(url: string): void {
     this.disconnectActive();
     this.fileSource.loadUrl(url);
     this.fileSource.connect(this.analyser);

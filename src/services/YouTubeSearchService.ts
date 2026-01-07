@@ -1,6 +1,7 @@
 import { SearchResult } from '../types/playlist';
 import { logger } from '../utils/logger';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
+import { formatTime } from '../utils/formatTime';
 
 export class YouTubeSearchService {
   private apiUrl: string;
@@ -80,11 +81,9 @@ export class YouTubeSearchService {
   }
 
   /**
-   * Format seconds to MM:SS
+   * Format seconds to MM:SS or HH:MM:SS
    */
   formatDuration(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return formatTime(seconds);
   }
 }

@@ -1,10 +1,11 @@
 import { Playlist, Track, PlaylistStats } from '../types/playlist';
 import { LocalStorageHelper } from '../utils/localStorage';
 import { logger } from '../utils/logger';
+import { formatTime } from '../utils/formatTime';
 
 export class PlaylistService {
   private storage: LocalStorageHelper;
-  private storageKey = 'youtube-visualizer-playlists';
+  private storageKey = 'music-visualizer-playlists';
 
   constructor() {
     this.storage = new LocalStorageHelper(this.storageKey);
@@ -136,14 +137,6 @@ export class PlaylistService {
    * Format duration (seconds → HH:MM:SS or MM:SS)
    */
   formatDuration(seconds: number): string {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    return formatTime(seconds);
   }
 }

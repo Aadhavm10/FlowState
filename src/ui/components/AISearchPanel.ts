@@ -68,27 +68,26 @@ export class AISearchPanel {
       successDiv.style.display = 'none';
 
       try {
+        // Generate playlist using AI
         const playlist = await this.playlistGenerator.generateFromPrompt(prompt);
 
-        this.actions.savePlaylist(playlist);
+        // Set playlist as queue and start playing
         this.actions.setQueue(playlist.tracks);
-
-        // Start playing the first track
         if (playlist.tracks.length > 0) {
           this.actions.setCurrentTrack(playlist.tracks[0]);
           this.actions.setPlaying(true);
         }
 
+        // Show success message
         statusDiv.style.display = 'none';
-        successDiv.style.display = 'flex';
-        const successText = successDiv.querySelector('.success-text') as HTMLElement;
-        successText.textContent = `Created "${playlist.name}" with ${playlist.tracks.length} tracks! Now playing...`;
+        successDiv.style.display = 'block';
+        const successText = successDiv.querySelector('.success-text');
+        if (successText) {
+          successText.textContent = `Created "${playlist.name}" with ${playlist.tracks.length} songs`;
+        }
 
+        // Clear input
         promptInput.value = '';
-
-        setTimeout(() => {
-          successDiv.style.display = 'none';
-        }, 4000);
 
       } catch (error) {
         console.error('Playlist generation failed:', error);

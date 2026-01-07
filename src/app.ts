@@ -4,9 +4,9 @@ import { AppState, initialAppState } from './state/AppState';
 import { AudioBridge } from './core/AudioBridge';
 import { PageManager } from './ui/PageManager';
 import { NowPlayingFooter } from './ui/components/NowPlayingFooter';
+import { PlaylistService } from './services/PlaylistService';
 import { AIService } from './services/AIService';
 import { YouTubeSearchService } from './services/YouTubeSearchService';
-import { PlaylistService } from './services/PlaylistService';
 import { PlaylistGenerator } from './services/PlaylistGenerator';
 import { logger } from './utils/logger';
 
@@ -28,6 +28,8 @@ export class App {
   private pageManager: PageManager;
   private nowPlayingFooter: NowPlayingFooter;
   private playlistService: PlaylistService;
+  private aiService: AIService;
+  private youtubeSearchService: YouTubeSearchService;
   private playlistGenerator: PlaylistGenerator;
 
   constructor(
@@ -35,7 +37,7 @@ export class App {
     private analyser: AnalyserNode,
     existingAudioElement?: HTMLAudioElement
   ) {
-    logger.info('Initializing YouTube Music System...');
+    logger.info('Initializing Music System...');
 
     // Initialize state management
     this.store = new StateManager<AppState>(initialAppState);
@@ -45,12 +47,12 @@ export class App {
     this.audioBridge = new AudioBridge(audioContext, analyser, existingAudioElement);
 
     // Initialize services
-    const aiService = new AIService();
-    const searchService = new YouTubeSearchService();
     this.playlistService = new PlaylistService();
+    this.aiService = new AIService();
+    this.youtubeSearchService = new YouTubeSearchService();
     this.playlistGenerator = new PlaylistGenerator(
-      aiService,
-      searchService,
+      this.aiService,
+      this.youtubeSearchService,
       this.playlistService
     );
 
@@ -65,7 +67,8 @@ export class App {
 
     this.nowPlayingFooter = new NowPlayingFooter(
       this.store,
-      this.actions
+      this.actions,
+      this.audioBridge
     );
 
     // Setup event listeners
@@ -91,9 +94,9 @@ export class App {
       const savedPlaylists = this.playlistService.loadAllPlaylists();
       this.actions.loadPlaylists(savedPlaylists);
 
-      logger.info('YouTube Music System initialized successfully!');
+      logger.info('Music System initialized successfully!');
     } catch (error) {
-      logger.error('Failed to initialize YouTube Music System:', error);
+      logger.error('Failed to initialize Music System:', error);
       throw error;
     }
   }
@@ -129,19 +132,27 @@ export class App {
         if (track) {
           logger.info('Loading track:', track.title);
           try {
-            await this.audioBridge.switchToYouTube(track.youtubeId);
-            this.actions.setAudioSource('youtube');
-            this.actions.setDuration(track.duration);
+            // Check if it's a YouTube track or local MP3
+            if (track.youtubeId) {
+              // Load YouTube video
+              logger.info('Loading YouTube track:', track.youtubeId);
+              this.audioBridge.switchToYouTube(track.youtubeId);
+              this.actions.setDuration(track.duration);
+            } else if (track.url) {
+              // Load local MP3 file
+              logger.info('Loading local MP3 file:', track.url);
+              this.audioBridge.loadUrl(track.url);
+              this.actions.setDuration(track.duration);
+            }
 
-            // Auto-play after loading completes
-            // Small delay to ensure video is fully ready
+            // Auto-play if needed
             setTimeout(() => {
               const shouldPlay = this.store.getState().playback.isPlaying;
               if (shouldPlay) {
                 logger.info('Auto-playing track after load');
                 this.audioBridge.play();
               }
-            }, 500);
+            }, 100);
           } catch (error) {
             logger.error('Failed to load track:', error);
           }

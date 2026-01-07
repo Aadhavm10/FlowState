@@ -3,16 +3,13 @@ import { StateActions } from '../../state/actions';
 import { AppState } from '../../state/AppState';
 import { AudioBridge } from '../../core/AudioBridge';
 import { BackButton } from '../components/BackButton';
-import { MinimalControls } from '../components/MinimalControls';
-import { MusicLibrarySidebar } from '../components/MusicLibrarySidebar';
-import { LibraryAPIService } from '../../services/LibraryAPIService';
-import { LibraryAudioService } from '../../services/LibraryAudioService';
+import { SimpleSongList } from '../components/SimpleSongList';
+import { MP3LibraryService } from '../../services/MP3LibraryService';
 
 export class VisualizerPage {
   private element: HTMLElement;
   private backButton: BackButton;
-  private minimalControls: MinimalControls;
-  private musicLibrary: MusicLibrarySidebar;
+  private musicLibrary: SimpleSongList;
   private unsubscribe: (() => void) | null = null;
 
   constructor(
@@ -26,17 +23,16 @@ export class VisualizerPage {
     this.element.style.display = 'none';
 
     this.backButton = new BackButton(onNavigateBack);
-    this.minimalControls = new MinimalControls(store, actions);
 
-    // Initialize music library services
-    const libraryAPIService = new LibraryAPIService();
-    const libraryAudioService = new LibraryAudioService(libraryAPIService, audioBridge);
+    // Initialize MP3 library service
+    const mp3LibraryService = new MP3LibraryService();
 
-    // Create music library sidebar
-    this.musicLibrary = new MusicLibrarySidebar(
+    // Create simple song list with file upload capability
+    this.musicLibrary = new SimpleSongList(
       store,
       actions,
-      libraryAudioService
+      mp3LibraryService,
+      audioBridge
     );
   }
 
@@ -46,70 +42,9 @@ export class VisualizerPage {
     // Add back button
     this.element.appendChild(this.backButton.render());
 
-    // Add file upload and sample controls
-    const controlsPanel = document.createElement('div');
-    controlsPanel.className = 'visualizer-file-controls';
-    controlsPanel.innerHTML = `
-      <div class="file-controls-inner">
-        <input type="file" id="viz-file-input" accept="audio/*" style="display: none;" />
-        <button class="btn-secondary" id="viz-choose-file">Choose Audio File</button>
-        <button class="btn-secondary" id="viz-load-sample">Load Sample Song</button>
-      </div>
-    `;
-    this.element.appendChild(controlsPanel);
-
-    // Add minimal playback controls
-    this.element.appendChild(this.minimalControls.render());
-
-    // Add music library sidebar
+    // Add music library sidebar (includes file upload)
     const librarySidebar = await this.musicLibrary.render();
     this.element.appendChild(librarySidebar);
-
-    // Setup event listeners for file controls
-    const fileInput = controlsPanel.querySelector('#viz-file-input') as HTMLInputElement;
-    const chooseFileBtn = controlsPanel.querySelector('#viz-choose-file') as HTMLButtonElement;
-    const loadSampleBtn = controlsPanel.querySelector('#viz-load-sample') as HTMLButtonElement;
-
-    chooseFileBtn.addEventListener('click', () => {
-      fileInput.click();
-    });
-
-    fileInput.addEventListener('change', async () => {
-      if (fileInput.files && fileInput.files[0]) {
-        const file = fileInput.files[0];
-        console.log('File selected:', file.name);
-
-        try {
-          // Switch audio bridge to file source
-          this.audioBridge.switchToFile(file);
-
-          // Update state
-          this.actions.setAudioSource('file');
-          this.actions.setPlaying(true);
-
-          console.log('File loaded successfully');
-        } catch (error) {
-          console.error('Failed to load file:', error);
-        }
-      }
-    });
-
-    loadSampleBtn.addEventListener('click', async () => {
-      console.log('Loading sample song...');
-
-      try {
-        // Switch audio bridge to sample song URL
-        this.audioBridge.switchToFileUrl('./song.mp3');
-
-        // Update state
-        this.actions.setAudioSource('file');
-        this.actions.setPlaying(true);
-
-        console.log('Sample song loaded successfully');
-      } catch (error) {
-        console.error('Failed to load sample song:', error);
-      }
-    });
 
     return this.element;
   }
@@ -134,7 +69,6 @@ export class VisualizerPage {
 
   destroy(): void {
     this.unsubscribe?.();
-    this.minimalControls.destroy();
     this.musicLibrary.destroy();
   }
 }

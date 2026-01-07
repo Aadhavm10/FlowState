@@ -1,35 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Groq from 'groq-sdk';
-
-// Retry logic for rate limits
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 5
-): Promise<T> {
-  let lastError: Error | null = null;
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error: any) {
-      lastError = error;
-      const isRateLimit = error?.status === 429 || error?.message?.includes('rate limit');
-      if (isRateLimit && attempt < maxRetries - 1) {
-        const delay = 500 * Math.pow(2, attempt);
-        console.log(`[AI Filter] Rate limited. Retrying in ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
-      }
-      throw error;
-    }
-  }
-  throw lastError || new Error('Max retries reached');
-}
+import { retryWithBackoff } from './utils/retryWithBackoff';
+import { corsHeaders } from './utils/cors';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

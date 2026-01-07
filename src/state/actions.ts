@@ -34,10 +34,6 @@ export class StateActions {
     this.store.updatePath('playback', { volume: clampedVolume });
   }
 
-  setAudioSource(audioSource: 'file' | 'youtube'): void {
-    this.store.updatePath('playback', { audioSource });
-  }
-
   setRepeatMode(repeat: 'none' | 'one' | 'all'): void {
     this.store.updatePath('playback', { repeat });
   }

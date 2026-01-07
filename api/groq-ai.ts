@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Groq from 'groq-sdk';
+import { retryWithBackoff } from './utils/retryWithBackoff';
+import { corsHeaders } from './utils/cors';
 
 /**
  * Get Groq client with validation
@@ -26,45 +28,6 @@ interface SongSuggestion {
 interface Track {
   title: string;
   artist: string;
-}
-
-/**
- * Retry wrapper with exponential backoff for rate limit handling
- * TEMPORARILY DISABLED strict rate limiting - will retry aggressively
- */
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 5, // Increased from 3
-  initialDelay: number = 500 // Start with 500ms
-): Promise<T> {
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error: any) {
-      lastError = error;
-
-      // Check if it's a rate limit error
-      const isRateLimitError =
-        error?.message?.includes('Too many requests') ||
-        error?.status === 429 ||
-        error?.error?.message?.includes('rate limit');
-
-      if (isRateLimitError && attempt < maxRetries - 1) {
-        // Exponential backoff: 500ms, 1s, 2s, 4s, 8s
-        const delay = initialDelay * Math.pow(2, attempt);
-        console.log(`Rate limited. Retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
-      }
-
-      // If not rate limit or max retries reached, throw
-      throw error;
-    }
-  }
-
-  throw lastError || new Error('Max retries reached');
 }
 
 /**
@@ -197,9 +160,9 @@ export default async function handler(
   res: VercelResponse
 ) {
   // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();

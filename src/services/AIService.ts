@@ -80,43 +80,9 @@ export class AIService {
 
   /**
    * Determine playlist size based on query specificity
+   * Currently returns fixed size for consistent results
    */
   determinePlaylistSize(prompt: string): number {
-    // LIMITING TEMPORARILY DISABLED - returning fixed size
-    return 30; // Fixed size for now
-
-    /* COMMENTED OUT - Original limiting logic
-    const lowerPrompt = prompt.toLowerCase();
-
-    // Very specific (one song or artist)
-    if (
-      lowerPrompt.includes('song') ||
-      lowerPrompt.includes('by ') ||
-      lowerPrompt.match(/^[\w\s]+ - [\w\s]+$/) // "Artist - Song" format
-    ) {
-      return 5;
-    }
-
-    // Specific genre or mood
-    if (
-      lowerPrompt.includes('playlist') ||
-      lowerPrompt.includes('genre') ||
-      lowerPrompt.includes('mood')
-    ) {
-      return 15;
-    }
-
-    // Broad or general
-    if (
-      lowerPrompt.includes('mix') ||
-      lowerPrompt.includes('variety') ||
-      lowerPrompt.length < 10
-    ) {
-      return 25;
-    }
-
-    // Default medium size
-    return 12;
-    */
+    return 30;
   }
 }

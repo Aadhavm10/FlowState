@@ -40,7 +40,6 @@ coverage/
 # Misc
 .claude/
 .vercel
-catalog.json
 
 # Deployment artifacts
 *.zip
