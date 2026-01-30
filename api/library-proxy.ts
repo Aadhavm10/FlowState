@@ -2,11 +2,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { corsHeaders } from './utils/cors';
 
 /**
- * Proxy requests to AWS backend to avoid mixed content issues
- * HTTPS (Vercel) → HTTPS (this proxy) → HTTP (AWS backend)
+ * Proxy requests to backend to avoid mixed content issues
+ * HTTPS (Vercel) → HTTPS (this proxy) → HTTPS (HF Spaces backend)
  *
  * Environment variable required:
- * - AWS_BACKEND_URL: AWS Elastic Beanstalk endpoint URL
+ * - BACKEND_URL: Hugging Face Spaces endpoint URL
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
@@ -18,13 +18,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
-  // Get AWS backend URL from environment variable
-  const AWS_BACKEND = process.env.AWS_BACKEND_URL || 'http://flowstate-music.us-east-1.elasticbeanstalk.com';
+  // Get backend URL from environment variable
+  const BACKEND_URL = process.env.BACKEND_URL || 'https://aadhavm10-flowstate.hf.space';
 
   // Extract the path to proxy (e.g., preview/abc123, health, download, etc.)
   const { path } = req.query;
   const targetPath = Array.isArray(path) ? path.join('/') : path || '';
-  const targetUrl = `${AWS_BACKEND}/api/${targetPath}`;
+  const targetUrl = `${BACKEND_URL}/api/${targetPath}`;
 
   console.log(`[Library Proxy] ${req.method} ${targetUrl}`);
 

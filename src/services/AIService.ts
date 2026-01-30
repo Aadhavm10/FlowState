@@ -7,7 +7,7 @@ export class AIService {
 
   constructor() {
     // In production (Vercel), use Vercel API proxy
-    // In dev, use local backend or AWS directly
+    // In dev, use local backend directly
     this.apiUrl = import.meta.env.DEV
       ? (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001')
       : '';  // Empty string means use relative URLs (Vercel API routes)

@@ -45,7 +45,7 @@ After deployment, configure environment variables in Vercel Dashboard:
 - `POST /api/ai-suggest` - Get AI song suggestions
 - `POST /api/ai-filter` - Filter compilations
 - `POST /api/youtube-search` - Search YouTube
-- `GET/POST /api/library-proxy/*` - AWS backend proxy
+- `GET/POST /api/library-proxy/*` - Backend proxy (HF Spaces)
 
 ## 🛠️ Commands
 
